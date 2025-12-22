@@ -28,6 +28,16 @@
             <small style="color: #666; font-size: 0.875rem;">The barcode/QR code value to encode</small>
         </div>
 
+        <div>
+            <label for="code_name" class="form_label">Name (Optional):</label>
+            <input type="text" id="code_name" name="code_name"
+                value="{% if let Some(name) = code_name %}{{ name }}{% endif %}"
+                maxlength="255"
+                class="form_input"
+                placeholder="Give this code a friendly name">
+            <small class="form_sublabel">An optional name to help identify this code</small>
+        </div>
+
         <div style="margin-bottom: 1rem;">
             <label for="site_id" style="display: block; margin-bottom: 0.25rem; font-weight: bold;">Site:</label>
             <select id="site_id" name="site_id" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 0.25rem;">

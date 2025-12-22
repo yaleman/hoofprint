@@ -17,6 +17,7 @@
             <tr class="header_row">
                 <!-- <th>Type</th> -->
                 <th>Value</th>
+                <th>Name</th>
                 <th>Site</th>
                 <th>Created</th>
                 <th>Actions</th>
@@ -27,6 +28,11 @@
             <tr class="code_row">
                 <!-- <td class="code_cell">{{ code.code_type }}</td> -->
                 <td class="code_cell">{{ code.code_value }}</td>
+                <td class="code_cell">
+                    {% if let Some(name) = code.code_name %}
+                        {{ name }}
+                    {% endif %}
+                </td>
                 <td class="code_cell">{{ code.site_name }}</td>
                 <td class="code_cell">{{ code.created_at }}</td>
                 <td class="code_cell">

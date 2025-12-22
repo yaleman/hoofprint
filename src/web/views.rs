@@ -28,6 +28,7 @@ struct CodeListItem {
     id: Uuid,
     code_type: String,
     code_value: String,
+    code_name: Option<String>,
     site_name: String,
     created_at: String,
 }
@@ -57,6 +58,7 @@ pub(crate) async fn homepage(
                 id: code_model.id,
                 code_type: code_model.type_,
                 code_value: code_model.value,
+                code_name: code_model.name.clone(),
                 site_name,
                 created_at: code_model.created_at.to_string(),
             }
@@ -74,6 +76,7 @@ struct ViewCodePage {
     pub code: Code,
     pub code_id: Uuid,
     pub code_value: String,
+    pub code_name: Option<String>,
     pub site_name: String,
     pub created_at: String,
     pub last_updated: Option<String>,
@@ -108,6 +111,7 @@ pub(crate) async fn view_code(
         code,
         code_id: code_model.id,
         code_value: code_model.value.clone(),
+        code_name: code_model.name.clone(),
         site_name: site_model.name,
         created_at: code_model.created_at.to_string(),
         last_updated: code_model.last_updated.map(|dt| dt.to_string()),
@@ -178,11 +182,20 @@ pub(crate) async fn create_code_post(
 
     // Create new Code
     let new_code_id = Uuid::now_v7();
+
+    // Convert empty string to None for name field
+    let name = if form.code_name.as_ref().is_none_or(|s| s.is_empty()) {
+        None
+    } else {
+        form.code_name
+    };
+
     let new_code = code::ActiveModel {
         id: Set(new_code_id),
         user_id: Set(auth.user_id),
         type_: Set(form.code_type),
         value: Set(form.code_value),
+        name: Set(name),
         site_id: Set(site_id),
         created_at: Set(time::PrimitiveDateTime::new(
             time::OffsetDateTime::now_utc().date(),
@@ -204,6 +217,7 @@ struct EditCodePage {
     pub code_id: String,
     pub code_type: String,
     pub code_value: String,
+    pub code_name: Option<String>,
     pub site_id: String,
     pub sites: Vec<SiteOption>,
     pub created_at: String,
@@ -254,6 +268,7 @@ pub(crate) async fn edit_code_get(
         code_id: code_model.id.to_string(),
         code_type: code_model.type_,
         code_value: code_model.value,
+        code_name: code_model.name.clone(),
         site_id: code_model.site_id.to_string(),
         sites,
         uuid_nil: Uuid::nil(),
@@ -303,8 +318,17 @@ pub(crate) async fn edit_code_post(
 
     // Update code
     let mut code_active: code::ActiveModel = code_model.into();
+
+    // Convert empty string to None for name field
+    let name = if form.code_name.as_ref().is_none_or(|s| s.is_empty()) {
+        None
+    } else {
+        form.code_name
+    };
+
     code_active.type_ = Set(form.code_type);
     code_active.value = Set(form.code_value);
+    code_active.name = Set(name);
     code_active.site_id = Set(site_id);
     code_active.last_updated = Set(Some(time::PrimitiveDateTime::new(
         time::OffsetDateTime::now_utc().date(),

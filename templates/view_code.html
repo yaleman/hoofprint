@@ -6,6 +6,12 @@
 {% endblock scripts %}
 
 {% block content %}
+{% if let Some(name) = code_name %}
+<div class="code_name_display">
+    <h2>{{ name }}</h2>
+</div>
+{% endif %}
+
 <div class="code_block">
     {{ code.as_html(code_value) | safe }}
 </div>

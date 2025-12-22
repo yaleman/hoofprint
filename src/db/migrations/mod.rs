@@ -1,6 +1,7 @@
 pub(crate) mod m20251220_01;
 pub(crate) mod m20251222_01_default_admin;
 pub(crate) mod m20251222_02_default_site;
+pub(crate) mod m20251222_03_add_code_name;
 
 use sea_orm_migration::prelude::*;
 
@@ -13,6 +14,7 @@ impl MigratorTrait for Migrator {
             Box::new(super::migrations::m20251220_01::Migration),
             Box::new(super::migrations::m20251222_01_default_admin::Migration),
             Box::new(super::migrations::m20251222_02_default_site::Migration),
+            Box::new(super::migrations::m20251222_03_add_code_name::Migration),
         ]
     }
 }

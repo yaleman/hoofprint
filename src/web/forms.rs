@@ -10,6 +10,7 @@ pub struct CreateCodeForm {
     pub code_type: String,
     pub code_value: String,
     pub site_id: String,
+    pub code_name: Option<String>,
 }
 
 impl CreateCodeForm {
@@ -34,6 +35,13 @@ impl CreateCodeForm {
             errors.push("Site ID must be a valid UUID".to_string());
         }
 
+        // Validate code_name if provided
+        if let Some(ref name) = self.code_name
+            && name.len() > 255
+        {
+            errors.push("Code name must be 255 characters or less".to_string());
+        }
+
         if errors.is_empty() {
             Ok(())
         } else {
@@ -53,6 +61,7 @@ pub struct EditCodeForm {
     pub code_type: String,
     pub code_value: String,
     pub site_id: String,
+    pub code_name: Option<String>,
 }
 
 impl EditCodeForm {
@@ -75,6 +84,13 @@ impl EditCodeForm {
         // Validate site_id is a valid UUID
         if Uuid::parse_str(&self.site_id).is_err() {
             errors.push("Site ID must be a valid UUID".to_string());
+        }
+
+        // Validate code_name if provided
+        if let Some(ref name) = self.code_name
+            && name.len() > 255
+        {
+            errors.push("Code name must be 255 characters or less".to_string());
         }
 
         if errors.is_empty() {
@@ -101,6 +117,7 @@ mod tests {
             code_type: "barcode".to_string(),
             code_value: "123456".to_string(),
             site_id: "00000000-0000-0000-0000-000000000000".to_string(),
+            code_name: None,
         };
         assert!(form.validate().is_ok());
 
@@ -108,6 +125,7 @@ mod tests {
             code_type: "qrcode".to_string(),
             code_value: "123456".to_string(),
             site_id: "00000000-0000-0000-0000-000000000000".to_string(),
+            code_name: None,
         };
         assert!(form.validate().is_ok());
 
@@ -115,6 +133,7 @@ mod tests {
             code_type: "invalid".to_string(),
             code_value: "123456".to_string(),
             site_id: "00000000-0000-0000-0000-000000000000".to_string(),
+            code_name: None,
         };
         assert!(form.validate().is_err());
     }
@@ -125,6 +144,7 @@ mod tests {
             code_type: "barcode".to_string(),
             code_value: "".to_string(),
             site_id: "00000000-0000-0000-0000-000000000000".to_string(),
+            code_name: None,
         };
         assert!(form.validate().is_err());
 
@@ -132,6 +152,7 @@ mod tests {
             code_type: "barcode".to_string(),
             code_value: "a".repeat(256),
             site_id: "00000000-0000-0000-0000-000000000000".to_string(),
+            code_name: None,
         };
         assert!(form.validate().is_err());
     }
@@ -142,6 +163,7 @@ mod tests {
             code_type: "barcode".to_string(),
             code_value: "123456".to_string(),
             site_id: "not-a-uuid".to_string(),
+            code_name: None,
         };
         assert!(form.validate().is_err());
     }

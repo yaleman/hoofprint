@@ -15,6 +15,7 @@ pub struct Model {
     pub site_id: Uuid,
     pub created_at: TimeDateTime,
     pub last_updated: Option<TimeDateTime>,
+    pub name: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

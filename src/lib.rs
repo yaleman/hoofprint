@@ -13,9 +13,10 @@
 #![deny(clippy::needless_pass_by_value)]
 #![deny(clippy::trivially_copy_pass_by_ref)]
 
-use std::fmt::Display;
-
 use askama::filters::HtmlSafe;
+use serde::{Deserialize, Serialize};
+
+use crate::{db::entities, error::HoofprintError};
 
 pub mod cli;
 pub mod config;
@@ -25,42 +26,51 @@ pub mod logging;
 pub mod prelude;
 pub mod web;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename = "lowercase")]
 pub enum Code {
-    Barcode(String),
-    QRCode(String),
+    Bar,
+    QR,
+}
+
+impl std::fmt::Display for Code {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Code::Bar => write!(f, "barcode"),
+            Code::QR => write!(f, "qrcode"),
+        }
+    }
 }
 
 impl HtmlSafe for Code {}
 
 impl Code {
-    pub fn as_html(&self) -> String {
+    pub fn as_html(&self, value: &str) -> String {
         match self {
-            Code::Barcode(code) => {
+            Code::Bar => {
                 format!(
                     r#"<svg class="code_image" id="barcode" data-value="{}"></svg>"#,
-                    code
+                    value
                 )
             }
-            Code::QRCode(code) => {
+            Code::QR => {
                 format!(
                     r#"<div class="code_image" id="qrcode" data-value="{}"></div>"#,
-                    code
+                    value
                 )
             }
-        }
-    }
-
-    pub fn value(&self) -> &str {
-        match self {
-            Code::Barcode(code) => code,
-            Code::QRCode(code) => code,
         }
     }
 }
 
-impl Display for Code {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_html())
+impl TryFrom<&entities::code::Model> for Code {
+    type Error = HoofprintError;
+
+    fn try_from(value: &entities::code::Model) -> Result<Self, Self::Error> {
+        match value.type_.as_str() {
+            "barcode" => Ok(Code::Bar),
+            "qrcode" => Ok(Code::QR),
+            _ => Err(HoofprintError::InvalidCodeType(value.type_.clone())),
+        }
     }
 }

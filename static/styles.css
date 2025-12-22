@@ -23,3 +23,38 @@
     height: auto;
     text-align: center;
 }
+
+.form_label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: bold;
+}
+
+.form_sublabel {
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.form_select {
+    min-width: 50%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 0.25rem;
+}
+
+.form_input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 0.25rem;
+}
+
+tr.header_row th {
+    background-color: #f0f0f0;
+    /* text-align: left; */
+    padding: 0.5rem;
+
+}
+tr.code_row td {
+    padding: 0.75rem; border: 1px solid #ddd;
+}

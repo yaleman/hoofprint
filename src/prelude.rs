@@ -6,8 +6,6 @@ pub use crate::config::Configuration;
 pub use crate::config::SendableConfig;
 pub use crate::db::connect;
 
-pub(crate) use askama::Template;
-pub(crate) use axum::extract::Path;
-pub(crate) use axum::{Router, response::Html, routing::get};
+pub(crate) use axum::Router;
 
 pub use crate::error::HoofprintError;

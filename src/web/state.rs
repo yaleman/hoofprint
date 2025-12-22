@@ -2,7 +2,7 @@ use crate::prelude::*;
 use sea_orm::DatabaseConnection;
 
 /// Application state shared across all web handlers
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AppState {
     pub db: DatabaseConnection,
     pub config: SendableConfig,

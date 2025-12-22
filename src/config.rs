@@ -3,6 +3,7 @@ use crate::{cli::CliOpts, prelude::*};
 /// A sendable configuration, for use across threads
 pub type SendableConfig = Arc<RwLock<Configuration>>;
 
+#[derive(Debug)]
 pub struct Configuration {
     pub database_file: String,
     pub server_host: String,

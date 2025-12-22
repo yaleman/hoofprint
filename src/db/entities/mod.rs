@@ -2,3 +2,4 @@
 
 pub(crate) mod code;
 pub(crate) mod site;
+pub(crate) mod user;

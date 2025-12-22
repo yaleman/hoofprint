@@ -1,10 +1,42 @@
 {% extends "base_template.html" %}
+{% block title %}HoofPrint - My Codes{% endblock %}
+
 {% block content %}
-<div>Things!</div>
 <div>
-    <ul>
-        <li><a href="/view/barcode">Barcode</a></li>
-        <li><a href="/view/qrcode">QR Code</a></li>
-    </ul>
+    <div style="margin-bottom: 2rem;">
+        <a href="/create"
+            style="padding: 0.5rem 1rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 0.25rem; display: inline-block;">Create
+            New Code</a>
+    </div>
+
+    {% if codes.is_empty() %}
+    <p>No codes yet. <a href="/create">Create your first code</a>!</p>
+    {% else %}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr class="header_row">
+                <!-- <th>Type</th> -->
+                <th>Value</th>
+                <th>Site</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for code in codes %}
+            <tr class="code_row">
+                <!-- <td class="code_cell">{{ code.code_type }}</td> -->
+                <td class="code_cell">{{ code.code_value }}</td>
+                <td class="code_cell">{{ code.site_name }}</td>
+                <td class="code_cell">{{ code.created_at }}</td>
+                <td class="code_cell">
+                    <a href="/view/{{ code.id }}">View</a> |
+                    <a href="/edit/{{ code.id }}">Edit</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
 </div>
 {% endblock content %}

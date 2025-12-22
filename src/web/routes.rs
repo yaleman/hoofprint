@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use axum::routing::{get, post};
 
 use super::state::AppState;
 use super::views;
@@ -8,4 +9,13 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/", get(views::homepage))
         .route("/view/{code}", get(views::view_code))
+        .route(
+            "/edit/{code}",
+            get(views::edit_code_get).post(views::edit_code_post),
+        )
+        .route(
+            "/create",
+            get(views::create_code_get).post(views::create_code_post),
+        )
+        .route("/delete/{code}", post(views::code_delete))
 }

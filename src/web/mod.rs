@@ -1,4 +1,7 @@
+pub mod auth;
+pub mod forms;
 pub mod routes;
+pub mod sessions;
 pub mod state;
 pub mod views;
 
@@ -17,9 +20,12 @@ pub async fn start_server(app_state: AppState) -> Result<(), Box<dyn std::error:
     let port = config.server_port;
     drop(config); // Release the lock
 
+    let (session_layer, cleanup_task) = sessions::create_session_layer(&app_state).await?;
+
     let app = routes::routes()
         .with_state(app_state)
         .layer(CompressionLayer::new())
+        .layer(session_layer)
         .nest_service(
             "/static",
             ServeDir::new(PathBuf::from("./static/")).precompressed_br(),
@@ -31,6 +37,6 @@ pub async fn start_server(app_state: AppState) -> Result<(), Box<dyn std::error:
     axum_server::bind(addr)
         .serve(app.layer(TraceLayer::new_for_http()).into_make_service())
         .await?;
-
+    cleanup_task.await??;
     Ok(())
 }

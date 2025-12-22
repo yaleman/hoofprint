@@ -7,8 +7,8 @@
 
 {% block content %}
 <div class="code_block">
-    {{ code }}
+    {{ code.as_html(code_value) | safe }}
 </div>
 
-<div class="code_string">{{ code.value() }} </div>
+<div class="code_string">{{ code_value }} </div>
 {% endblock content %}

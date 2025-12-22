@@ -10,7 +10,11 @@ document.addEventListener("DOMContentLoaded", () => {
 			console.error("No barcode value found!");
 			return;
 		}
-		JsBarcode("#barcode", barcodeValue);
+		JsBarcode("#barcode", barcodeValue,{
+			format: "code128",
+			lineColor: "#000",
+			displayValue: false
+		});
 	}
 
 	const qrElement = document.querySelector("#qrcode");
@@ -21,7 +25,6 @@ document.addEventListener("DOMContentLoaded", () => {
 			return;
 		}
 		new QRCode(qrElement, {
-			text: qrValue,
 			width: 128,
 			height: 128,
 			colorDark: "#000000",

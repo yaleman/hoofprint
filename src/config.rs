@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{cli::CliOpts, prelude::*};
 
 /// A sendable configuration, for use across threads
 pub type SendableConfig = Arc<RwLock<Configuration>>;
@@ -7,6 +7,16 @@ pub struct Configuration {
     pub database_file: String,
     pub server_host: String,
     pub server_port: u16,
+}
+
+impl From<CliOpts> for Configuration {
+    fn from(opts: CliOpts) -> Self {
+        Self {
+            database_file: opts.database_file,
+            server_host: opts.host,
+            server_port: opts.port,
+        }
+    }
 }
 
 impl Default for Configuration {

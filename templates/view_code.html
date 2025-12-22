@@ -1,0 +1,14 @@
+{% extends "base_template.html" %}
+{% block scripts %}
+<script src="/static/JsBarcode.all.min.js"></script>
+<script src="/static/qrcode.min.js"></script>
+<script src="/static/view.js"></script>
+{% endblock scripts %}
+
+{% block content %}
+<div class="code_block">
+    {{ code }}
+</div>
+
+<div class="code_string">{{ code.value() }} </div>
+{% endblock content %}

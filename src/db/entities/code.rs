@@ -13,8 +13,8 @@ pub struct Model {
     pub type_: String,
     pub value: String,
     pub site_id: Uuid,
-    pub created_at: TimeDateTime,
-    pub last_updated: Option<TimeDateTime>,
+    pub created_at: DateTimeUtc,
+    pub last_updated: Option<DateTimeUtc>,
     pub name: Option<String>,
 }
 

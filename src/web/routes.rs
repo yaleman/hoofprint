@@ -19,4 +19,5 @@ pub fn routes() -> Router<AppState> {
             get(views::create_code_get).post(views::create_code_post),
         )
         .route("/delete/{code}", post(views::code_delete))
+        .route("/scan", get(views::scan_get).post(views::scan_post))
 }

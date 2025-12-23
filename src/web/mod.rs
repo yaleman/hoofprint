@@ -23,14 +23,19 @@ pub async fn start_server(app_state: AppState) -> Result<(), Box<dyn std::error:
 
     let (session_layer, cleanup_task) = sessions::create_session_layer(&app_state).await?;
 
+    let compression_layer = CompressionLayer::new()
+        .gzip(true)
+        .deflate(true)
+        .quality(tower_http::CompressionLevel::Best);
+
     let app = routes::routes()
         .with_state(app_state)
-        .layer(CompressionLayer::new())
         .layer(session_layer)
         .nest_service(
             "/static",
             ServeDir::new(PathBuf::from("./static/")).precompressed_br(),
-        );
+        )
+        .layer(compression_layer);
 
     let addr = format!("{}:{}", host, port).parse::<SocketAddr>()?;
     info!("Starting server on http://{}", addr);

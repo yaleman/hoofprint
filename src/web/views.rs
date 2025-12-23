@@ -1,9 +1,13 @@
+use std::time::SystemTime;
+
 use askama::Template;
 use axum::{
     extract::{Form, Path, State},
     response::{Html, Redirect},
 };
-use sea_orm::{ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, QueryFilter};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, QueryFilter, prelude::DateTimeUtc,
+};
 use tracing::instrument;
 use uuid::Uuid;
 
@@ -129,6 +133,14 @@ struct CreateCodePage {
     pub uuid_nil: String,
 }
 
+#[derive(Template)]
+#[template(path = "scan.html")]
+struct ScanCodePage {
+    pub sites: Vec<SiteOption>,
+    pub error: Option<String>,
+    pub uuid_nil: String,
+}
+
 struct SiteOption {
     pub id: String,
     pub name: String,
@@ -197,10 +209,7 @@ pub(crate) async fn create_code_post(
         value: Set(form.code_value),
         name: Set(name),
         site_id: Set(site_id),
-        created_at: Set(time::PrimitiveDateTime::new(
-            time::OffsetDateTime::now_utc().date(),
-            time::OffsetDateTime::now_utc().time(),
-        )),
+        created_at: Set(DateTimeUtc::from(SystemTime::now())),
         last_updated: Set(None),
     };
 
@@ -330,10 +339,7 @@ pub(crate) async fn edit_code_post(
     code_active.value = Set(form.code_value);
     code_active.name = Set(name);
     code_active.site_id = Set(site_id);
-    code_active.last_updated = Set(Some(time::PrimitiveDateTime::new(
-        time::OffsetDateTime::now_utc().date(),
-        time::OffsetDateTime::now_utc().time(),
-    )));
+    code_active.last_updated = Set(Some(DateTimeUtc::from(SystemTime::now())));
 
     code_active.update(&app_state.db).await?;
 
@@ -369,4 +375,81 @@ pub(crate) async fn code_delete(
 
     // Redirect to homepage (code no longer exists)
     Ok(Redirect::to("/"))
+}
+
+#[instrument(level = "info")]
+pub(crate) async fn scan_get(
+    State(app_state): State<AppState>,
+    _auth: AuthenticatedUser,
+) -> Result<Html<String>, HoofprintError> {
+    // Fetch all sites for dropdown
+    let sites_models = site::Entity::find().all(&app_state.db).await?;
+
+    // Transform into template structure
+    let sites = sites_models
+        .into_iter()
+        .map(|site| SiteOption {
+            id: site.id.to_string(),
+            name: site.name,
+        })
+        .collect();
+
+    let page = ScanCodePage {
+        sites,
+        error: None,
+        uuid_nil: Uuid::nil().to_string(),
+    };
+
+    Ok(Html(page.render()?))
+}
+#[instrument(level = "info")]
+pub(crate) async fn scan_post(
+    State(app_state): State<AppState>,
+    auth: AuthenticatedUser,
+    Form(form): Form<CreateCodeForm>,
+) -> Result<Redirect, HoofprintError> {
+    // Validate form data
+    form.validate()?;
+
+    // Parse site_id, default to Uuid::nil() if empty or already nil
+    let site_id = form.parse_site_id()?;
+    let site_id = if site_id == Uuid::nil() || form.site_id.is_empty() {
+        Uuid::nil()
+    } else {
+        // Verify site exists if not using default
+        site::Entity::find_by_id(site_id)
+            .one(&app_state.db)
+            .await?
+            .ok_or_else(|| {
+                HoofprintError::ValidationError(vec![format!("Site {} not found", site_id)])
+            })?;
+        site_id
+    };
+
+    // Create new Code
+    let new_code_id = Uuid::now_v7();
+
+    // Convert empty string to None for name field
+    let name = if form.code_name.as_ref().is_none_or(|s| s.is_empty()) {
+        None
+    } else {
+        form.code_name
+    };
+
+    let new_code = code::ActiveModel {
+        id: Set(new_code_id),
+        user_id: Set(auth.user_id),
+        type_: Set(form.code_type),
+        value: Set(form.code_value),
+        name: Set(name),
+        site_id: Set(site_id),
+        created_at: Set(DateTimeUtc::from(SystemTime::now())),
+        last_updated: Set(None),
+    };
+
+    // Insert into database
+    new_code.insert(&app_state.db).await?;
+
+    // Redirect to view page
+    Ok(Redirect::to(&format!("/view/{}", new_code_id)))
 }

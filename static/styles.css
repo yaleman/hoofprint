@@ -18,6 +18,7 @@ main {
     max-width: 98%;
     margin: 0 auto;
     padding: 2rem;
+    padding-top: 0.5rem;
     border-radius: 1rem;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
@@ -86,7 +87,8 @@ h1.logo a {
 .form_sublabel {
     display:block;
     color: #666;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
+    padding-top: 0.25rem;
 }
 
 .form_select {

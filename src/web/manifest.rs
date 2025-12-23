@@ -1,5 +1,4 @@
 use crate::prelude::*;
-
 use axum::http::{StatusCode, header::CONTENT_TYPE};
 
 /// The MIME type for `.webmanifest` files.

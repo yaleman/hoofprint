@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::{cli::CliOpts, prelude::*};
 
 /// A sendable configuration, for use across threads
@@ -8,6 +10,13 @@ pub struct Configuration {
     pub database_file: String,
     pub server_host: String,
     pub server_port: u16,
+}
+
+impl Configuration {
+    pub fn base_url(&self) -> Result<Url, HoofprintError> {
+        Url::from_str(&format!("http://{}:{}", self.server_host, self.server_port))
+            .map_err(|err| HoofprintError::InvalidBaseUrl(err.to_string()))
+    }
 }
 
 impl From<CliOpts> for Configuration {

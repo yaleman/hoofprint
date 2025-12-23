@@ -1,9 +1,10 @@
-pub mod auth;
-pub mod forms;
+pub(crate) mod auth;
+pub(crate) mod forms;
+pub(crate) mod manifest;
 pub mod routes;
 pub mod sessions;
 pub mod state;
-pub mod views;
+pub(crate) mod views;
 
 use std::{net::SocketAddr, path::PathBuf};
 
@@ -13,7 +14,7 @@ use tracing::{info, instrument};
 pub use state::AppState;
 
 /// Starts the web server with the given application state
-#[instrument(level = "info", skip_all)]
+#[instrument(level = "debug", skip_all)]
 pub async fn start_server(app_state: AppState) -> Result<(), Box<dyn std::error::Error>> {
     let config = app_state.config.read().await;
     let host = config.server_host.clone();

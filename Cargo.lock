@@ -1105,7 +1105,6 @@ dependencies = [
  "sea-orm",
  "sea-orm-migration",
  "serde",
- "serde_json",
  "simplelog",
  "time",
  "tokio",
@@ -1113,6 +1112,7 @@ dependencies = [
  "tower-sessions",
  "tower-sessions-sqlx-store",
  "tracing",
+ "url",
  "uuid",
 ]
 

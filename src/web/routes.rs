@@ -13,6 +13,7 @@ pub fn routes() -> Router<AppState> {
             "/edit/{code}",
             get(views::edit_code_get).post(views::edit_code_post),
         )
+        .route("/manifest.json", get(super::manifest::manifest))
         .route(
             "/create",
             get(views::create_code_get).post(views::create_code_post),

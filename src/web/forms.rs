@@ -1,9 +1,6 @@
 //! Form structures and validation for hoofprint web application
 
-use serde::Deserialize;
-use uuid::Uuid;
-
-use crate::error::HoofprintError;
+use crate::prelude::*;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateCodeForm {

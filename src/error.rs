@@ -15,6 +15,8 @@ pub enum HoofprintError {
     Unauthorized,
     InvalidCodeType(String),
     InvalidSite,
+    InvalidBaseUrl(String),
+    InternalError(String),
 }
 
 impl std::fmt::Display for HoofprintError {
@@ -32,6 +34,8 @@ impl std::fmt::Display for HoofprintError {
                 write!(f, "Invalid Code Type: {}", code_type)
             }
             HoofprintError::InvalidSite => write!(f, "Invalid Site"),
+            HoofprintError::InvalidBaseUrl(url) => write!(f, "Invalid Base URL: {}", url),
+            HoofprintError::InternalError(msg) => write!(f, "Internal Error: {}", msg),
         }
     }
 }
@@ -66,6 +70,10 @@ impl IntoResponse for HoofprintError {
                 let body = format!("Template Error: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR, body).into_response()
             }
+            HoofprintError::InvalidBaseUrl(err) => {
+                let body = format!("Invalid Base URL: {}", err);
+                (StatusCode::BAD_REQUEST, body).into_response()
+            }
             HoofprintError::Database(err) => {
                 let body = format!("Database Error: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR, body).into_response()
@@ -93,6 +101,10 @@ impl IntoResponse for HoofprintError {
             HoofprintError::InvalidCodeType(code_type) => {
                 let body = format!("Invalid Code Type: {}", code_type);
                 (StatusCode::BAD_REQUEST, body).into_response()
+            }
+            HoofprintError::InternalError(msg) => {
+                let body = format!("Internal Error: {}", msg);
+                (StatusCode::INTERNAL_SERVER_ERROR, body).into_response()
             }
         }
     }

@@ -26,15 +26,15 @@ struct HomePage {
 
 struct CodeListItem {
     id: Uuid,
-    code_type: String,
+    // code_type: String,
     code_value: String,
     code_name: Option<String>,
     site_name: String,
-    created_at: String,
+    // created_at: String,
 }
 
 /// Homepage handler that returns a simple HTML response
-#[instrument(level = "info")]
+#[instrument(level = "info", skip_all)]
 pub(crate) async fn homepage(
     State(app_state): State<AppState>,
     auth: AuthenticatedUser,
@@ -56,11 +56,11 @@ pub(crate) async fn homepage(
 
             CodeListItem {
                 id: code_model.id,
-                code_type: code_model.type_,
+                // code_type: code_model.type_,
                 code_value: code_model.value,
                 code_name: code_model.name.clone(),
                 site_name,
-                created_at: code_model.created_at.to_string(),
+                // created_at: code_model.created_at.to_string(),
             }
         })
         .collect();
@@ -83,7 +83,7 @@ struct ViewCodePage {
     pub is_owner: bool,
 }
 
-#[instrument(level = "info")]
+#[instrument(level = "info", skip(app_state, auth))]
 pub(crate) async fn view_code(
     State(app_state): State<AppState>,
     Path(code_id_str): Path<String>,
@@ -227,7 +227,7 @@ struct EditCodePage {
     pub uuid_nil: Uuid,
 }
 
-#[instrument(level = "info")]
+#[instrument(level = "info", skip(app_state, auth))]
 pub(crate) async fn edit_code_get(
     State(app_state): State<AppState>,
     Path(code_id_str): Path<String>,

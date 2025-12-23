@@ -6,13 +6,13 @@
     <h2>Create New Code</h2>
 
     {% if let Some(error_string) = error %}
-    <div style="background-color: #f8d7da; color: #721c24; padding: 1rem; border-radius: 0.25rem; margin-bottom: 1rem; border: 1px solid #f5c6cb;">
+    <div class="error">
         <strong>Error:</strong> {{ error_string }}
     </div>
     {% endif %}
 
-    <form method="post" action="/create" style="max-width: 600px;">
-        <div style="margin-bottom: 1rem;">
+    <form method="post" action="/create">
+        <div>
             <label for="code_type" class="form_label">Code Type:</label>
             <select id="code_type" name="code_type" required class="form_select">
                 <option value>-- Select Type --</option>
@@ -21,7 +21,7 @@
             </select>
         </div>
 
-        <div style="margin-bottom: 1rem;">
+        <div>
             <label for="code_value" class="form_label">Code Value:</label>
             <input type="text" id="code_value" name="code_value" required maxlength="255"
                 class="form_input" placeholder="Enter code value (max 255 characters)">
@@ -35,7 +35,7 @@
             <small class="form_sublabel">An optional name to help identify this code</small>
         </div>
 
-        <div style="margin-bottom: 1rem;">
+        <div>
             <label for="site_id" class="form_label">Site:</label>
             <select id="site_id" name="site_id" required class="form_select">
                 <!-- <option value="{{ uuid_nil }}">Generic site</option> -->
@@ -46,12 +46,12 @@
             <small class="form_sublabel">The site/shop this code is for</small>
         </div>
 
-        <div style="margin-top: 1.5rem;">
+        <div>
             <button type="submit"
-                style="padding: 0.5rem 1.5rem; background-color: #28a745; color: white; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 1rem;">Create
+                class="btn btn-green">Create
                 Code</button>
-            <a href="/"
-                style="margin-left: 1rem; padding: 0.5rem 1.5rem; background-color: #6c757d; color: white; text-decoration: none; border-radius: 0.25rem; display: inline-block;">Cancel</a>
+            <a href="/">
+                <button type="button" class="btn btn-red">Cancel</button></a>
         </div>
     </form>
 </div>

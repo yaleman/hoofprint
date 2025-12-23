@@ -10,7 +10,7 @@
 #![deny(clippy::needless_pass_by_value)]
 #![deny(clippy::trivially_copy_pass_by_ref)]
 
-use hoofprint::prelude::*;
+use hoofprint::{config::Configuration, prelude::*};
 
 use std::{process::ExitCode, sync::Arc};
 
@@ -34,7 +34,7 @@ async fn main() -> Result<ExitCode, ExitCode> {
         ExitCode::FAILURE
     })?;
 
-    info!("Connected to database successfully");
+    debug!("Connected to database successfully");
 
     let app_state = hoofprint::web::AppState::new(db, config);
 

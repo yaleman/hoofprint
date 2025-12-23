@@ -1,3 +1,50 @@
+:root {
+    --bgcolor-red: #c82333;
+    --bgcolor-lightred: #FF9999;
+    --bgcolor-white: #ffffff;
+    --bgcolor-green: #28a745;
+    --bgcolor-purple: #6f42c1;
+    --bgcolor-blue: #001eff;
+}
+
+body {
+    padding: 1.0rem;
+    font-family: Arial, sans-serif;
+    background-color: rgb(213, 183, 255);
+}
+
+main {
+    background-color: white;
+    max-width: 98%;
+    margin: 0 auto;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1.logo {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+}
+
+img.logo {
+    height: 4rem;
+    vertical-align: middle;
+    margin-right: 1rem;
+}
+
+h1.logo a {
+    text-decoration: none;
+    color: black;
+}
+
+.code_name_display {
+    font-size: 2.0rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
 .code_block {
     background-color: #f0f0f0;
     padding: 1rem;
@@ -6,13 +53,14 @@
     margin-bottom: 1rem;
     text-align: center;
 }
-.code_string {
+.code_string, .edit_link {
+    margin-top: 0.5rem;
 	border-radius: 1rem;
 	font-weight: bold;
 	background-color: white;
 	font-size: 2rem;
 	border: 1px solid grey;
-    padding: 1.0rem;
+    padding: 0.8rem;
     min-width: 50%;
     max-width: 95%;
     text-align: center;
@@ -24,13 +72,19 @@
     text-align: center;
 }
 
+.form_box {
+    margin-bottom: 0.75rem;
+}
+
 .form_label {
     display: block;
+    margin-top: 0.25rem;
     margin-bottom: 0.25rem;
     font-weight: bold;
 }
 
 .form_sublabel {
+    display:block;
     color: #666;
     font-size: 0.875rem;
 }
@@ -57,4 +111,63 @@ tr.header_row th {
 }
 tr.code_row td {
     padding: 0.75rem; border: 1px solid #ddd;
+}
+
+.btn {
+    padding: 0.5rem;
+    font-size: 1.0rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    background-color: var(--bgcolor-purple);
+    color: white;
+    min-width: 5rem;
+    border: none;
+}
+
+.btn-green {
+    background-color: var(--bgcolor-green);
+}
+
+.btn-red {
+    background-color: var(--bgcolor-red);
+}
+
+.btn-blue {
+    background-color: var(--bgcolor-blue);
+}
+
+div.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid #f5c6cb;
+}
+
+select {
+    padding: 0.5rem;
+}
+
+.info_box {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background-color: #f0f0f0;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    min-width: 50%;
+}
+
+.form_buttons {
+    display: flex;
+    gap: 1rem;
+    align-items: left;
+}
+
+.flex_grow {
+    flex-grow: 1;
+}
+
+.hidden {
+    display: none;
 }

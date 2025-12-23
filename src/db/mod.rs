@@ -10,6 +10,8 @@ use tracing::{info, instrument};
 #[cfg(test)]
 pub async fn test_connect() -> Result<DatabaseConnection, sea_orm::error::DbErr> {
     use std::sync::Arc;
+
+    use crate::config::Configuration;
     let config = Arc::new(RwLock::new(Configuration {
         database_file: ":memory:".to_string(),
         server_host: "127.0.0.1".to_string(),
@@ -18,7 +20,7 @@ pub async fn test_connect() -> Result<DatabaseConnection, sea_orm::error::DbErr>
     connect(config).await
 }
 
-#[instrument(level = "info", skip_all)]
+#[instrument(level = "debug", skip_all)]
 pub async fn connect(config: SendableConfig) -> Result<DatabaseConnection, sea_orm::error::DbErr> {
     let mut connect_options = ConnectOptions::new(get_connect_string(config).await);
     connect_options
@@ -36,7 +38,7 @@ pub async fn connect(config: SendableConfig) -> Result<DatabaseConnection, sea_o
     Ok(db)
 }
 
-pub async fn get_connect_string(config: SendableConfig) -> String {
+async fn get_connect_string(config: SendableConfig) -> String {
     let database_file = config.read().await.database_file.clone();
 
     if database_file == ":memory:" {

@@ -14,9 +14,18 @@ pub fn init_logging(debug: bool) -> Option<ExitCode> {
         LevelFilter::Info
     };
 
+    let mut config_builder = ConfigBuilder::new();
+    config_builder.set_target_level(level);
+
+    // Filter out sqlx::query events unless in debug mode
+    if !debug {
+        config_builder.add_filter_ignore_str("sqlx::query");
+        config_builder.add_filter_ignore_str("call");
+    }
+
     if let Err(err) = CombinedLogger::init(vec![TermLogger::new(
         level,
-        ConfigBuilder::new().set_target_level(level).build(),
+        config_builder.build(),
         TerminalMode::Mixed,
         ColorChoice::Auto,
     )]) {

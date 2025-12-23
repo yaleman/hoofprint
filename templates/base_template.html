@@ -1,16 +1,26 @@
 <html>
     <head>
         <title>{% block title %}HoofPrint{% endblock %}</title>
+        <link rel="icon" type="image/png" href="/static/img/128x128logo.png" />
+        <link rel="icon" type="image/svg+xml" href="/static/img/logo.svg" />
+        <link rel="manifest" href="/manifest.json" />
         {% block scripts %}
 
         {% endblock scripts %}
         <link rel="stylesheet" type="text/css" href="/static/styles.css">
     </head>
     <body>
-        <h1><a href="/">HoofPrint</a></h1>
+        {% block header %}
+        <h1 class="logo">
+            <a href="/">
+                <img class="logo" src="/static/img/logo.png" alt="HoofPrint" /> hoofPrint
+            </a>
+        </h1>
+        {% endblock %}
+        <main>
+            {% block content %}
 
-        {% block content %}
-
-        {% endblock content %}
+            {% endblock content %}
+        </main>
     </body>
 </html>

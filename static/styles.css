@@ -18,7 +18,7 @@ main {
     max-width: 98%;
     margin: 0 auto;
     padding: 2rem;
-    padding-top: 0.5rem;
+    padding-top: 1.0rem;
     border-radius: 1rem;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
@@ -37,6 +37,10 @@ img.logo {
 h1.logo a {
     text-decoration: none;
     color: black;
+}
+
+.codes_table {
+width: 100%; border-collapse: collapse;
 }
 
 .code_name_display {
@@ -105,11 +109,9 @@ h1.logo a {
     border-radius: 0.25rem;
 }
 
-tr.header_row th {
+thead tr th {
     background-color: #f0f0f0;
-    /* text-align: left; */
     padding: 0.5rem;
-
 }
 tr.code_row td {
     padding: 0.75rem; border: 1px solid #ddd;
@@ -172,4 +174,14 @@ select {
 
 .hidden {
     display: none;
+}
+
+.flex_right {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.mb-1rem {
+    margin-bottom: 1rem;
 }

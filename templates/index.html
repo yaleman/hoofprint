@@ -3,22 +3,20 @@
 
 {% block content %}
 <div>
-    <div style="margin-bottom: 2rem;">
-        <a href="/create"
-            style="padding: 0.5rem 1rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 0.25rem; display: inline-block;">Create
-            New Code</a>
+    <div class="flex_right mb-1rem">
+        <a href="/create"><button type="button" class="btn btn-blue">Create New Code</button></a>
     </div>
 
     {% if codes.is_empty() %}
     <p>No codes yet. <a href="/create">Create your first code</a>!</p>
     {% else %}
-    <table style="width: 100%; border-collapse: collapse;">
+    <table class="codes_table">
         <thead>
-            <tr class="header_row">
+            <tr>
                 <th>Name</th>
                 <th>Site</th>
                 <th>Value</th>
-                <th>Actions</th>
+                <th><!-- Actions --></th>
             </tr>
         </thead>
         <tbody>
@@ -31,7 +29,7 @@
                 </td>
                 <td class="code_cell">{{ code.site_name }}</td>
                 <td class="code_cell">{{ code.code_value }}</td>
-                <td class="code_cell">
+                <td class="code_cell flex_right">
                     <a href="/view/{{ code.id }}"><button type="button" class="btn">View</button></a>
                     <a href="/edit/{{ code.id }}"><button type="button" class="btn">Edit</button></a>
                 </td>

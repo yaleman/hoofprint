@@ -1,5 +1,7 @@
+use std::str::FromStr;
+
 use crate::prelude::*;
-use axum::http::{StatusCode, header::CONTENT_TYPE};
+use axum::http::{HeaderMap, StatusCode, header::CONTENT_TYPE};
 
 /// The MIME type for `.webmanifest` files.
 const MIME_TYPE_MANIFEST: &str = "application/manifest+json;charset=utf-8";
@@ -49,11 +51,18 @@ pub(crate) struct ManifestResponse {
 #[instrument(skip_all)]
 pub(crate) async fn manifest(
     State(app_state): State<AppState>,
+    headers: HeaderMap,
 ) -> Result<impl IntoResponse, HoofprintError> {
-    let config = app_state.config.read().await;
+    let hostname = match headers.get("host") {
+        Some(host) => host.to_str()?.to_string(),
+        None => app_state.config.read().await.server_host.clone(),
+    };
+
+    let start_url = Url::from_str(&format!("http://{}", hostname))?;
+
     let manifest = ManifestResponse {
         name: "hoofPrint",
-        start_url: config.base_url()?,
+        start_url,
         display: Some(DisplayOption::MinimalUi),
         display_override: None,
         icons: vec![ManifestIcon {

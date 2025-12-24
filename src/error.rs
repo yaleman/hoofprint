@@ -1,6 +1,6 @@
 use axum::{
     body::Body,
-    http::{Response, StatusCode},
+    http::{Response, StatusCode, header::ToStrError},
     response::IntoResponse,
 };
 use tracing::error;
@@ -42,6 +42,12 @@ impl std::fmt::Display for HoofprintError {
 
 impl std::error::Error for HoofprintError {}
 
+impl From<ToStrError> for HoofprintError {
+    fn from(err: ToStrError) -> Self {
+        HoofprintError::InternalError(err.to_string())
+    }
+}
+
 impl From<askama::Error> for HoofprintError {
     fn from(err: askama::Error) -> Self {
         HoofprintError::Template(err)
@@ -57,6 +63,12 @@ impl From<sea_orm::SqlxError> for HoofprintError {
 impl From<sea_orm::DbErr> for HoofprintError {
     fn from(err: sea_orm::DbErr) -> Self {
         HoofprintError::Database(err.to_string())
+    }
+}
+
+impl From<url::ParseError> for HoofprintError {
+    fn from(err: url::ParseError) -> Self {
+        HoofprintError::InternalError(format!("Failed to parse URL: {}", err))
     }
 }
 

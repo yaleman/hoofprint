@@ -10,7 +10,7 @@
 #![deny(clippy::needless_pass_by_value)]
 #![deny(clippy::trivially_copy_pass_by_ref)]
 
-use hoofprint::{config::Configuration, prelude::*};
+use hoofprint::{cli::handle_admin_reset, config::Configuration, prelude::*};
 
 use std::{process::ExitCode, sync::Arc};
 
@@ -25,9 +25,7 @@ async fn main() -> Result<ExitCode, ExitCode> {
         return Err(exit_code);
     }
 
-    info!("Starting HoofPrint application");
-
-    let config = Arc::new(RwLock::new(Configuration::from(cli_opts)));
+    let config = Arc::new(RwLock::new(Configuration::from(&cli_opts)));
 
     let db = connect(config.clone()).await.map_err(|err| {
         error!("Failed to connect to database: {}", err);
@@ -35,6 +33,10 @@ async fn main() -> Result<ExitCode, ExitCode> {
     })?;
 
     debug!("Connected to database successfully");
+
+    if cli_opts.reset_admin_password {
+        return handle_admin_reset(db.clone()).await;
+    }
 
     let app_state = hoofprint::web::AppState::new(db, config);
 

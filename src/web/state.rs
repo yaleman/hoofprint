@@ -1,5 +1,4 @@
-use crate::prelude::*;
-use sea_orm::DatabaseConnection;
+use crate::{db::entities::user, prelude::*, web::auth::AUTH_USER_ID};
 
 /// Application state shared across all web handlers
 #[derive(Clone, Debug)]
@@ -11,5 +10,36 @@ pub struct AppState {
 impl AppState {
     pub fn new(db: DatabaseConnection, config: SendableConfig) -> Self {
         Self { db, config }
+    }
+
+    pub(crate) async fn get_authenticated_user(
+        &self,
+        session: &tower_sessions::Session,
+    ) -> Result<crate::web::auth::AuthenticatedUser, HoofprintError> {
+        if let Some(user_id_str) = session.get::<String>(AUTH_USER_ID).await? {
+            let user_id = Uuid::parse_str(&user_id_str).map_err(|_| {
+                error!(user_id=?user_id_str, "Invalid user ID in session");
+                HoofprintError::NeedToLogin
+            })?;
+            let user = user::Entity::find_by_id(user_id)
+                .one(&self.db)
+                .await
+                .map_err(|err| {
+                    error!(error=?err, user_id=?user_id, "Failed to query user");
+                    HoofprintError::NeedToLogin
+                })?;
+            match user {
+                None => {
+                    error!(user_id=?user_id, "User not found");
+                    if let Err(err) = session.flush().await {
+                        error!(error=?err, "Failed to delete invalid session");
+                    };
+                    Err(HoofprintError::NeedToLogin)
+                }
+                Some(validuser) => Ok(crate::web::auth::AuthenticatedUser::from(validuser)),
+            }
+        } else {
+            Err(HoofprintError::NeedToLogin)
+        }
     }
 }

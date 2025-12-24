@@ -3,9 +3,14 @@
 
 {% block content %}
 <div>
-    <div class="flex_right mb-1rem">
-        <a href="/scan"><button type="button" class="btn btn-green">Scan Code</button></a>
-        <a href="/create"><button type="button" class="btn btn-blue">Create New Code</button></a>
+    <div class="container mb-1rem">
+        <div class="v-middle">Logged in as: {{ user_email }}</div>
+        <div class="flex_grow"></div>
+        <div class="flex_right">
+            <a href="/logout"><button type="button" class="btn btn-red">Logout</button></a>
+            <a href="/scan"><button type="button" class="btn btn-green">Scan Code</button></a>
+            <a href="/create"><button type="button" class="btn btn-blue">Create New Code</button></a>
+        </div>
     </div>
 
     {% if codes.is_empty() %}

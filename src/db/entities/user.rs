@@ -8,10 +8,11 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    pub preferred_username: String,
     pub display_name: String,
+    pub email: String,
     pub groups: Json,
-    pub claim_json: Json,
+    #[serde(skip_serializing)]
+    pub password: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

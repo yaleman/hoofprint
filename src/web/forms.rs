@@ -1,6 +1,6 @@
 //! Form structures and validation for hoofprint web application
 
-use crate::prelude::*;
+use crate::{Code, prelude::*};
 
 #[derive(Debug, Deserialize)]
 pub struct CreateCodeForm {
@@ -16,7 +16,7 @@ impl CreateCodeForm {
         let mut errors = Vec::new();
 
         // Validate code_type
-        if self.code_type != "barcode" && self.code_type != "qrcode" {
+        if Code::try_from(self.code_type.as_str()).is_err() {
             errors.push("Code type must be either 'barcode' or 'qrcode'".to_string());
         }
 

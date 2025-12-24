@@ -23,6 +23,7 @@ pub mod config;
 pub(crate) mod db;
 pub mod error;
 pub mod logging;
+pub(crate) mod password;
 pub mod prelude;
 pub mod web;
 
@@ -63,14 +64,34 @@ impl Code {
     }
 }
 
+impl TryFrom<&str> for Code {
+    type Error = HoofprintError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "barcode" => Ok(Code::Bar),
+            "qrcode" => Ok(Code::QR),
+            _ => Err(HoofprintError::InvalidCodeType(value.to_string())),
+        }
+    }
+}
+
 impl TryFrom<&entities::code::Model> for Code {
     type Error = HoofprintError;
 
     fn try_from(value: &entities::code::Model) -> Result<Self, Self::Error> {
-        match value.type_.as_str() {
-            "barcode" => Ok(Code::Bar),
-            "qrcode" => Ok(Code::QR),
-            _ => Err(HoofprintError::InvalidCodeType(value.type_.clone())),
-        }
+        Code::try_from(value.type_.as_str())
     }
+}
+
+/// generate a random password
+pub(crate) fn get_random_password(length: usize) -> String {
+    use rand::Rng;
+    use rand::distr::Alphanumeric;
+
+    rand::rng()
+        .sample_iter(Alphanumeric)
+        .take(length)
+        .map(char::from)
+        .collect()
 }

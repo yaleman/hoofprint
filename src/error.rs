@@ -1,6 +1,9 @@
 use axum::{
     body::Body,
-    http::{Response, StatusCode, header::ToStrError},
+    http::{
+        HeaderValue, Response, StatusCode,
+        header::{LOCATION, ToStrError},
+    },
     response::IntoResponse,
 };
 use tracing::error;
@@ -17,6 +20,7 @@ pub enum HoofprintError {
     InvalidSite,
     InvalidBaseUrl(String),
     InternalError(String),
+    NeedToLogin,
 }
 
 impl std::fmt::Display for HoofprintError {
@@ -36,6 +40,7 @@ impl std::fmt::Display for HoofprintError {
             HoofprintError::InvalidSite => write!(f, "Invalid Site"),
             HoofprintError::InvalidBaseUrl(url) => write!(f, "Invalid Base URL: {}", url),
             HoofprintError::InternalError(msg) => write!(f, "Internal Error: {}", msg),
+            HoofprintError::NeedToLogin => write!(f, "Need to Login"),
         }
     }
 }
@@ -45,6 +50,20 @@ impl std::error::Error for HoofprintError {}
 impl From<ToStrError> for HoofprintError {
     fn from(err: ToStrError) -> Self {
         HoofprintError::InternalError(err.to_string())
+    }
+}
+
+impl From<argon2::password_hash::Error> for HoofprintError {
+    fn from(err: argon2::password_hash::Error) -> Self {
+        error!("Password hashing error: {}", err);
+        HoofprintError::InternalError("Password Hashing Error, check the logs!".to_string())
+    }
+}
+
+impl From<tower_sessions::session::Error> for HoofprintError {
+    fn from(err: tower_sessions::session::Error) -> Self {
+        error!("Session error: {}", err);
+        HoofprintError::InternalError("Session Error, check the logs!".to_string())
     }
 }
 
@@ -69,6 +88,12 @@ impl From<sea_orm::DbErr> for HoofprintError {
 impl From<url::ParseError> for HoofprintError {
     fn from(err: url::ParseError) -> Self {
         HoofprintError::InternalError(format!("Failed to parse URL: {}", err))
+    }
+}
+
+impl From<serde_json::error::Error> for HoofprintError {
+    fn from(err: serde_json::error::Error) -> Self {
+        HoofprintError::InternalError(format!("JSON Error: {}", err))
     }
 }
 
@@ -117,6 +142,14 @@ impl IntoResponse for HoofprintError {
             HoofprintError::InternalError(msg) => {
                 let body = format!("Internal Error: {}", msg);
                 (StatusCode::INTERNAL_SERVER_ERROR, body).into_response()
+            }
+            HoofprintError::NeedToLogin => {
+                // redirect the user to the login page
+                (
+                    StatusCode::SEE_OTHER,
+                    [(LOCATION, HeaderValue::from_static("/login"))],
+                )
+                    .into_response()
             }
         }
     }

@@ -1,14 +1,19 @@
 pub(crate) mod entities;
 pub(crate) mod migrations;
 
-use crate::prelude::*;
+use std::str::FromStr;
+
+use crate::{get_random_password, prelude::*};
 use migrations::Migrator;
-use sea_orm::{ConnectOptions, Database, DatabaseConnection, TransactionTrait};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue::Set, ConnectOptions, Database, DatabaseConnection, EntityTrait,
+    JsonValue, TransactionTrait,
+};
 use sea_orm_migration::prelude::*;
 use tracing::{info, instrument};
 
 #[cfg(test)]
-pub async fn test_connect() -> Result<DatabaseConnection, sea_orm::error::DbErr> {
+pub async fn test_connect() -> Result<DatabaseConnection, HoofprintError> {
     use std::sync::Arc;
 
     use crate::config::Configuration;
@@ -16,12 +21,13 @@ pub async fn test_connect() -> Result<DatabaseConnection, sea_orm::error::DbErr>
         database_file: ":memory:".to_string(),
         server_host: "127.0.0.1".to_string(),
         server_port: 3000,
+        frontend_hostname: "localhost".to_string(),
     }));
     connect(config).await
 }
 
 #[instrument(level = "debug", skip_all)]
-pub async fn connect(config: SendableConfig) -> Result<DatabaseConnection, sea_orm::error::DbErr> {
+pub async fn connect(config: SendableConfig) -> Result<DatabaseConnection, HoofprintError> {
     let mut connect_options = ConnectOptions::new(get_connect_string(config).await);
     connect_options
         .sqlx_slow_statements_logging_settings(
@@ -34,6 +40,27 @@ pub async fn connect(config: SendableConfig) -> Result<DatabaseConnection, sea_o
     // start a transaction so if it doesn't work, we can roll back.
     let db_transaction = db.begin().await?;
     Migrator::up(&db_transaction, None).await?;
+
+    // ensure the admin account exists
+
+    if entities::user::Entity::find_by_id(Uuid::nil())
+        .one(&db_transaction)
+        .await?
+        .is_none()
+    {
+        info!("Creating default admin user");
+        let password = get_random_password(16);
+        let admin_user = entities::user::ActiveModel {
+            id: Set(Uuid::nil()),
+            email: Set("admin".to_string()),
+            display_name: Set("Administrator".to_string()),
+            password: Set(password.clone()),
+            groups: Set(JsonValue::from_str(r#"["admin"]"#)?),
+        };
+        admin_user.insert(&db_transaction).await?;
+        info!("Default admin user created with password: {}", password);
+    }
+
     db_transaction.commit().await?;
     Ok(db)
 }

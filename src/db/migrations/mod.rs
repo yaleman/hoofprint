@@ -1,7 +1,8 @@
 pub(crate) mod m20251220_01;
-pub(crate) mod m20251222_01_default_admin;
+// pub(crate) mod m20251222_01_default_admin;
 pub(crate) mod m20251222_02_default_site;
 pub(crate) mod m20251222_03_add_code_name;
+pub(crate) mod m20251224_01_username_to_email;
 
 use sea_orm_migration::prelude::*;
 
@@ -12,9 +13,10 @@ impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
             Box::new(super::migrations::m20251220_01::Migration),
-            Box::new(super::migrations::m20251222_01_default_admin::Migration),
+            // Box::new(super::migrations::m20251222_01_default_admin::Migration),
             Box::new(super::migrations::m20251222_02_default_site::Migration),
             Box::new(super::migrations::m20251222_03_add_code_name::Migration),
+            Box::new(super::migrations::m20251224_01_username_to_email::Migration),
         ]
     }
 }

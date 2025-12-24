@@ -24,6 +24,8 @@ pub(crate) async fn create_session_layer(
     );
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(false)
-        .with_expiry(Expiry::OnInactivity(Duration::seconds(300)));
+        .with_http_only(true)
+        .with_domain(app_state.config.read().await.frontend_hostname.clone())
+        .with_expiry(Expiry::OnInactivity(Duration::seconds(3600)));
     Ok((session_layer, cleanup_task))
 }

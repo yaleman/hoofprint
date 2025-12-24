@@ -1,4 +1,5 @@
 use sea_orm_migration::prelude::*;
+use uuid::Uuid;
 
 pub struct Migration;
 
@@ -15,10 +16,11 @@ impl MigrationTrait for Migration {
         // Using INSERT OR IGNORE for idempotency (SQLite syntax)
         let sql = r#"
             INSERT OR IGNORE INTO "user" (id, preferred_username, display_name, groups, claim_json)
-            VALUES ('00000000-0000-0000-0000-000000000000', 'admin', 'Default Administrator', '[]', '{}')
-        "#;
+            VALUES ('XXXXX', 'admin', 'Default Administrator', '[]', '{}')
+        "#
+        .replace("XXXXX", &(Uuid::nil().to_string()));
 
-        manager.get_connection().execute_unprepared(sql).await?;
+        manager.get_connection().execute_unprepared(&sql).await?;
 
         Ok(())
     }
@@ -29,10 +31,7 @@ impl MigrationTrait for Migration {
             .exec_stmt(
                 Query::delete()
                     .from_table(User::Table)
-                    .and_where(
-                        Expr::col(User::Id)
-                            .eq("00000000-0000-0000-0000-000000000000"),
-                    )
+                    .and_where(Expr::col(User::Id).eq(&(Uuid::nil().to_string())))
                     .to_owned(),
             )
             .await

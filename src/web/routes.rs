@@ -20,4 +20,12 @@ pub fn routes() -> Router<AppState> {
         )
         .route("/delete/{code}", post(views::code_delete))
         .route("/scan", get(views::scan_get).post(views::scan_post))
+        .route(
+            "/login",
+            get(super::auth::get_login).post(super::auth::post_login),
+        )
+        .route(
+            "/logout",
+            post(super::auth::logout).get(super::auth::logout),
+        )
 }

@@ -1,36 +1,128 @@
 //! Authentication module for hoofprint
 
-use axum::{
-    extract::FromRequestParts,
-    http::request::Parts,
-};
-use uuid::Uuid;
+use crate::{db::entities::user, password::verify_password, prelude::*};
 
-use crate::error::HoofprintError;
+use axum::{
+    Form,
+    // extract::FromRequestParts,
+    http::{StatusCode, header::LOCATION},
+};
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+use tower_sessions::Session;
+
+pub(crate) const AUTH_USER_ID: &str = "user_id";
 
 /// Extractor for authenticated user information
-/// Currently hardcoded to return the default admin user for MVP
-/// TODO: Implement real authentication (OAuth/OIDC, session management, etc.)
 #[derive(Debug, Clone)]
 pub struct AuthenticatedUser {
     pub user_id: Uuid,
+    pub email: String,
+    #[allow(dead_code)]
+    pub groups: Vec<String>,
 }
 
-impl<S> FromRequestParts<S> for AuthenticatedUser
-where
-    S: Send + Sync,
-{
-    type Rejection = HoofprintError;
-
-    async fn from_request_parts(
-        _parts: &mut Parts,
-        _state: &S,
-    ) -> Result<Self, Self::Rejection> {
-        // TODO: Implement real authentication
-        // For MVP, hardcode to default admin user
-        Ok(AuthenticatedUser {
-            user_id: Uuid::parse_str("00000000-0000-0000-0000-000000000000")
-                .map_err(|_| HoofprintError::Authentication)?,
-        })
+impl From<user::Model> for AuthenticatedUser {
+    fn from(user: user::Model) -> Self {
+        Self {
+            user_id: user.id,
+            email: user.email.clone(),
+            groups: user
+                .groups
+                .as_array()
+                .unwrap_or(&vec![])
+                .iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect(),
+        }
     }
+}
+
+#[derive(Template, WebTemplate)]
+#[template(path = "login_form.html")]
+pub(crate) struct LoginPage {
+    pub email: String,
+    pub error: Option<String>,
+}
+
+#[instrument(skip_all)]
+pub(crate) async fn get_login() -> Result<LoginPage, HoofprintError> {
+    let login_page = LoginPage {
+        email: "".to_string(),
+        error: None,
+    };
+
+    Ok(login_page)
+}
+
+#[derive(Deserialize, Template, WebTemplate)]
+#[template(path = "login_form.html")]
+pub(crate) struct LoginForm {
+    email: String,
+    password: String,
+    error: Option<String>,
+}
+
+#[instrument(skip(form, app_state, session), fields(email = %form.email))]
+pub(crate) async fn post_login(
+    app_state: State<AppState>,
+    session: Session,
+    Form(form): Form<LoginForm>,
+) -> Result<axum::response::Response, HoofprintError> {
+    if form.password.is_empty() || form.email.is_empty() {
+        let login_page = LoginForm {
+            email: form.email,
+            password: "".to_string(),
+            error: Some("Email or password cannot be empty.".to_string()),
+        };
+        return Ok(login_page.into_response());
+    }
+
+    // check if the user exists
+    let user = user::Entity::find()
+        .filter(user::Column::Email.eq(form.email.clone()))
+        .one(&app_state.db)
+        .await?;
+
+    match user {
+        None => {
+            let login_page = LoginForm {
+                email: form.email,
+                password: "".to_string(),
+                error: Some("Invalid email or password.".to_string()),
+            };
+            return Ok(login_page.into_response());
+        }
+        Some(user) => {
+            // verify the password
+            match verify_password(&form.password, &user.password) {
+                Err(err) => {
+                    error!(error=?err, email=%form.email, "Password verification failed");
+                    session.delete().await?;
+                    let login_page = LoginForm {
+                        email: form.email,
+                        password: "".to_string(),
+                        error: Some("Invalid email or password.".to_string()),
+                    };
+                    return Ok(login_page.into_response());
+                }
+                Ok(()) => {
+                    info!(email=%form.email, "User authenticated successfully");
+                    session.insert(AUTH_USER_ID, user.id.to_string()).await?;
+                    session.save().await?;
+                }
+            }
+        }
+    }
+
+    Ok((StatusCode::SEE_OTHER, [(LOCATION, "/")]).into_response())
+}
+
+pub(crate) async fn logout(session: Session) -> Result<axum::response::Response, HoofprintError> {
+    let userid: String = session
+        .get(AUTH_USER_ID)
+        .await?
+        .unwrap_or("unknown".to_string());
+    session.delete().await?;
+    debug!("User {} logged out", userid);
+    Ok((StatusCode::SEE_OTHER, [(LOCATION, "/login")]).into_response())
 }

@@ -1,13 +1,15 @@
 use std::time::SystemTime;
 
 use askama::Template;
+use askama_web::WebTemplate;
 use axum::{
     extract::{Form, Path, State},
-    response::{Html, Redirect},
+    response::Redirect,
 };
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, QueryFilter, prelude::DateTimeUtc,
 };
+use tower_sessions::Session;
 use tracing::instrument;
 use uuid::Uuid;
 
@@ -16,16 +18,16 @@ use crate::{
     db::entities::{code, site},
     error::HoofprintError,
     web::{
-        auth::AuthenticatedUser,
         forms::{CreateCodeForm, EditCodeForm},
         state::AppState,
     },
 };
 
-#[derive(Template)]
+#[derive(Template, WebTemplate)]
 #[template(path = "index.html")]
-struct HomePage {
+pub(crate) struct HomePage {
     codes: Vec<CodeListItem>,
+    user_email: String,
 }
 
 struct CodeListItem {
@@ -34,16 +36,17 @@ struct CodeListItem {
     code_value: String,
     code_name: Option<String>,
     site_name: String,
-    // created_at: String,
 }
 
 /// Homepage handler that returns a simple HTML response
 #[instrument(level = "info", skip_all)]
 pub(crate) async fn homepage(
     State(app_state): State<AppState>,
-    auth: AuthenticatedUser,
-) -> Result<Html<String>, HoofprintError> {
+    session: Session,
+) -> Result<HomePage, HoofprintError> {
     // Query all codes for the authenticated user with related sites
+    let auth = app_state.get_authenticated_user(&session).await?;
+
     let codes_with_sites = code::Entity::find()
         .filter(code::Column::UserId.eq(auth.user_id))
         .find_also_related(site::Entity)
@@ -69,14 +72,16 @@ pub(crate) async fn homepage(
         })
         .collect();
 
-    let homepage = HomePage { codes };
-    Ok(Html(homepage.render()?))
+    Ok(HomePage {
+        codes,
+        user_email: auth.email,
+    })
 }
 
-#[derive(Template)]
+#[derive(Template, WebTemplate)]
 #[template(path = "view_code.html")]
 #[allow(dead_code)]
-struct ViewCodePage {
+pub(crate) struct ViewCodePage {
     pub code: Code,
     pub code_id: Uuid,
     pub code_value: String,
@@ -87,12 +92,13 @@ struct ViewCodePage {
     pub is_owner: bool,
 }
 
-#[instrument(level = "info", skip(app_state, auth))]
+#[instrument(level = "info", skip(app_state, session))]
 pub(crate) async fn view_code(
     State(app_state): State<AppState>,
     Path(code_id_str): Path<String>,
-    auth: AuthenticatedUser,
-) -> Result<Html<String>, HoofprintError> {
+    session: Session,
+) -> Result<ViewCodePage, HoofprintError> {
+    let auth = app_state.get_authenticated_user(&session).await?;
     // Parse code_id as UUID
     let code_id = Uuid::parse_str(&code_id_str)
         .map_err(|_| HoofprintError::NotFound(format!("Invalid code ID: {}", code_id_str)))?;
@@ -122,26 +128,26 @@ pub(crate) async fn view_code(
         is_owner: code_model.user_id == auth.user_id,
     };
 
-    Ok(Html(code_page.render()?))
+    Ok(code_page)
 }
 
-#[derive(Template)]
+#[derive(Template, WebTemplate)]
 #[template(path = "create_code.html")]
-struct CreateCodePage {
+pub(crate) struct CreateCodePage {
     pub sites: Vec<SiteOption>,
     pub error: Option<String>,
     pub uuid_nil: String,
 }
 
-#[derive(Template)]
+#[derive(Template, WebTemplate)]
 #[template(path = "scan.html")]
-struct ScanCodePage {
+pub(crate) struct ScanCodePage {
     pub sites: Vec<SiteOption>,
     pub error: Option<String>,
     pub uuid_nil: String,
 }
 
-struct SiteOption {
+pub(crate) struct SiteOption {
     pub id: String,
     pub name: String,
 }
@@ -149,8 +155,8 @@ struct SiteOption {
 #[instrument(level = "info")]
 pub(crate) async fn create_code_get(
     State(app_state): State<AppState>,
-    _auth: AuthenticatedUser,
-) -> Result<Html<String>, HoofprintError> {
+    _session: Session,
+) -> Result<CreateCodePage, HoofprintError> {
     // Fetch all sites for dropdown
     let sites_models = site::Entity::find().all(&app_state.db).await?;
 
@@ -163,21 +169,20 @@ pub(crate) async fn create_code_get(
         })
         .collect();
 
-    let page = CreateCodePage {
+    Ok(CreateCodePage {
         sites,
         error: None,
         uuid_nil: Uuid::nil().to_string(),
-    };
-
-    Ok(Html(page.render()?))
+    })
 }
 
 #[instrument(level = "info")]
 pub(crate) async fn create_code_post(
     State(app_state): State<AppState>,
-    auth: AuthenticatedUser,
+    session: Session,
     Form(form): Form<CreateCodeForm>,
 ) -> Result<Redirect, HoofprintError> {
+    let auth = app_state.get_authenticated_user(&session).await?;
     // Validate form data
     form.validate()?;
 
@@ -220,9 +225,9 @@ pub(crate) async fn create_code_post(
     Ok(Redirect::to(&format!("/view/{}", new_code_id)))
 }
 
-#[derive(Template)]
+#[derive(Template, WebTemplate)]
 #[template(path = "edit_code.html")]
-struct EditCodePage {
+pub(crate) struct EditCodePage {
     pub code_id: String,
     pub code_type: String,
     pub code_value: String,
@@ -236,12 +241,13 @@ struct EditCodePage {
     pub uuid_nil: Uuid,
 }
 
-#[instrument(level = "info", skip(app_state, auth))]
+#[instrument(level = "info", skip(app_state, session))]
 pub(crate) async fn edit_code_get(
     State(app_state): State<AppState>,
     Path(code_id_str): Path<String>,
-    auth: AuthenticatedUser,
-) -> Result<Html<String>, HoofprintError> {
+    session: Session,
+) -> Result<EditCodePage, HoofprintError> {
+    let auth = app_state.get_authenticated_user(&session).await?;
     // Parse code_id as UUID
     let code_id = Uuid::parse_str(&code_id_str)
         .map_err(|_| HoofprintError::NotFound(format!("Invalid code ID: {}", code_id_str)))?;
@@ -286,16 +292,17 @@ pub(crate) async fn edit_code_get(
         error: None,
     };
 
-    Ok(Html(page.render()?))
+    Ok(page)
 }
 
-#[instrument(level = "info")]
+#[instrument(level = "info", skip(app_state, session, form))]
 pub(crate) async fn edit_code_post(
     State(app_state): State<AppState>,
     Path(code_id_str): Path<String>,
-    auth: AuthenticatedUser,
+    session: Session,
     Form(form): Form<EditCodeForm>,
 ) -> Result<Redirect, HoofprintError> {
+    let auth = app_state.get_authenticated_user(&session).await?;
     // Parse code_id as UUID
     let code_id = Uuid::parse_str(&code_id_str)
         .map_err(|_| HoofprintError::NotFound(format!("Invalid code ID: {}", code_id_str)))?;
@@ -347,12 +354,13 @@ pub(crate) async fn edit_code_post(
     Ok(Redirect::to(&format!("/view/{}", code_id)))
 }
 
-#[instrument(level = "info")]
+#[instrument(level = "info", skip(app_state, session))]
 pub(crate) async fn code_delete(
     State(app_state): State<AppState>,
     Path(code_id_str): Path<String>,
-    auth: AuthenticatedUser,
+    session: Session,
 ) -> Result<Redirect, HoofprintError> {
+    let auth = app_state.get_authenticated_user(&session).await?;
     // Parse code_id as UUID
     let code_id = Uuid::parse_str(&code_id_str)
         .map_err(|_| HoofprintError::NotFound(format!("Invalid code ID: {}", code_id_str)))?;
@@ -380,8 +388,8 @@ pub(crate) async fn code_delete(
 #[instrument(level = "info")]
 pub(crate) async fn scan_get(
     State(app_state): State<AppState>,
-    _auth: AuthenticatedUser,
-) -> Result<Html<String>, HoofprintError> {
+    _session: Session,
+) -> Result<ScanCodePage, HoofprintError> {
     // Fetch all sites for dropdown
     let sites_models = site::Entity::find().all(&app_state.db).await?;
 
@@ -394,20 +402,19 @@ pub(crate) async fn scan_get(
         })
         .collect();
 
-    let page = ScanCodePage {
+    Ok(ScanCodePage {
         sites,
         error: None,
         uuid_nil: Uuid::nil().to_string(),
-    };
-
-    Ok(Html(page.render()?))
+    })
 }
-#[instrument(level = "info")]
+#[instrument(level = "info", skip(app_state, session, form), fields(site_id = %form.site_id, code_type = %form.code_type))]
 pub(crate) async fn scan_post(
     State(app_state): State<AppState>,
-    auth: AuthenticatedUser,
+    session: Session,
     Form(form): Form<CreateCodeForm>,
 ) -> Result<Redirect, HoofprintError> {
+    let auth = app_state.get_authenticated_user(&session).await?;
     // Validate form data
     form.validate()?;
 

@@ -40,14 +40,34 @@ async fn main() -> Result<ExitCode, ExitCode> {
 
     let app_state = hoofprint::web::AppState::new(db, config);
 
-    match hoofprint::web::start_server(app_state).await {
-        Ok(_) => {
-            info!("Server shut down gracefully");
+    tokio::select!(
+        biased;
+
+        _ = tokio::signal::ctrl_c() => {
+            info!("Received Ctrl-C, shutting down");
             Ok(ExitCode::SUCCESS)
         }
-        Err(e) => {
-            eprintln!("Server error: {}", e);
-            Err(ExitCode::FAILURE)
+         Some(()) = async move {
+            let sigterm = tokio::signal::unix::SignalKind::alarm();
+            #[allow(clippy::unwrap_used)]
+            tokio::signal::unix::signal(sigterm).unwrap().recv().await
+        } => {
+            info!("Server shut down gracefully");
+            Ok(ExitCode::SUCCESS)
+
         }
-    }
+
+        result = hoofprint::web::start_server(app_state) => {
+            match result {
+                Ok(_) => {
+                    info!("Server shut down gracefully");
+                    Ok(ExitCode::SUCCESS)
+                }
+                Err(e) => {
+                    eprintln!("Server error: {}", e);
+                    Err(ExitCode::FAILURE)
+                }
+            }
+        }
+    )
 }

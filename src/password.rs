@@ -5,6 +5,7 @@ use crate::error::HoofprintError;
 
 const PASSWORD_SALT: &str = "ThisIsInsecureButBetterThanNothing12345";
 
+/// Hash a password using Argon2 algorithm ready for storage
 pub(crate) fn hash_password(password: &str) -> Result<String, HoofprintError> {
     let argon2 = Argon2::default();
     let base64_salt = base64::Engine::encode(
@@ -22,6 +23,7 @@ pub(crate) fn hash_password(password: &str) -> Result<String, HoofprintError> {
         })
 }
 
+/// Verify an input password against a stored hashed password
 pub(crate) fn verify_password(input_password: &str, db_hashed: &str) -> Result<(), HoofprintError> {
     let parsed_hash = argon2::PasswordHash::new(db_hashed)?;
     Argon2::default()

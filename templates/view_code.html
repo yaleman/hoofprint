@@ -14,7 +14,11 @@
 {% endif %}
 
 <div class="code_block">
-    {{ code.as_html(code_value) | safe }}
+    <div class="flex_grow"></div>
+    <div>
+        {{ code.as_html(code_value) | safe }}
+    </div>
+    <div class="flex_grow"></div>
 </div>
 
 <div class="code_string">{{ code_value }} </div>

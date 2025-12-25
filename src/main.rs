@@ -24,7 +24,6 @@ async fn main() -> Result<ExitCode, ExitCode> {
     if let Some(exit_code) = init_logging(cli_opts.debug) {
         return Err(exit_code);
     }
-
     let config = Arc::new(RwLock::new(Configuration::from(&cli_opts)));
 
     let db = connect(config.clone()).await.map_err(|err| {

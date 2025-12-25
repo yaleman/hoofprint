@@ -12,6 +12,20 @@ impl AppState {
         Self { db, config }
     }
 
+    pub(crate) async fn base_url(&self) -> String {
+        let config = self.config.read().await;
+        let scheme = if config.tls_certificate.is_some() && config.tls_key.is_some() {
+            "https"
+        } else {
+            "http"
+        };
+        let port = match config.port.get() {
+            80 | 443 => "".to_string(),
+            other => format!(":{}", other),
+        };
+        format!("{}://{}{}", scheme, config.frontend_hostname, port)
+    }
+
     pub(crate) async fn get_authenticated_user(
         &self,
         session: &tower_sessions::Session,

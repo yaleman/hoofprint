@@ -244,7 +244,7 @@ async function handleCodeDetected(symbol) {
 
 function determineCodeType(typeName) {
     // typeName examples: "QR-Code", "EAN-13", "Code-128", etc.
-    if (typeName === 'QR-Code') {
+    if (typeName === 'QR-Code' || typeName == "ZBAR_QRCODE") {
         return 'qrcode';
     } else {
         // All other formats are barcodes

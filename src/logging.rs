@@ -23,6 +23,8 @@ pub fn init_logging(debug: bool) -> Option<ExitCode> {
         config_builder.add_filter_ignore_str("call");
     }
 
+    config_builder.add_filter_ignore_str("h2::codec");
+
     if let Err(err) = CombinedLogger::init(vec![TermLogger::new(
         level,
         config_builder.build(),

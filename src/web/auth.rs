@@ -1,6 +1,6 @@
 //! Authentication module for hoofprint
 
-use crate::{db::entities::user, password::verify_password, prelude::*};
+use crate::{constants::Urls, db::entities::user, password::verify_password, prelude::*};
 
 use axum::{
     Form,
@@ -16,6 +16,7 @@ pub(crate) const AUTH_USER_ID: &str = "user_id";
 #[derive(Debug, Clone)]
 pub struct AuthenticatedUser {
     pub user_id: Uuid,
+    #[allow(dead_code)]
     pub email: String,
     #[allow(dead_code)]
     pub groups: Vec<String>,
@@ -117,6 +118,7 @@ pub(crate) async fn post_login(
     Ok((StatusCode::SEE_OTHER, [(LOCATION, "/")]).into_response())
 }
 
+#[instrument(skip_all, fields(user_id = %session.get::<String>(AUTH_USER_ID).await?.unwrap_or("unknown-user".to_string())))]
 pub(crate) async fn logout(session: Session) -> Result<axum::response::Response, HoofprintError> {
     let userid: String = session
         .get(AUTH_USER_ID)
@@ -124,5 +126,5 @@ pub(crate) async fn logout(session: Session) -> Result<axum::response::Response,
         .unwrap_or("unknown".to_string());
     session.delete().await?;
     debug!("User {} logged out", userid);
-    Ok((StatusCode::SEE_OTHER, [(LOCATION, "/login")]).into_response())
+    Ok((StatusCode::SEE_OTHER, [(LOCATION, Urls::Login.as_ref())]).into_response())
 }

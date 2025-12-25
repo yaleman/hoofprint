@@ -13,7 +13,7 @@ pub(crate) use crate::config::SendableConfig;
 pub(crate) use crate::error::HoofprintError;
 pub(crate) use crate::web::AppState;
 
+pub(crate) use crate::constants::Urls;
+pub use crate::db::connect;
 pub(crate) use sea_orm::DatabaseConnection;
 pub(crate) use sea_orm::EntityTrait;
-
-pub use crate::db::connect;

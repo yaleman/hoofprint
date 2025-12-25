@@ -14,14 +14,16 @@ use tracing::{info, instrument};
 
 #[cfg(test)]
 pub async fn test_connect() -> Result<DatabaseConnection, HoofprintError> {
-    use std::sync::Arc;
+    use std::{num::NonZeroU16, sync::Arc};
 
     use crate::config::Configuration;
     let config = Arc::new(RwLock::new(Configuration {
         database_file: ":memory:".to_string(),
-        server_host: "127.0.0.1".to_string(),
-        server_port: 3000,
+        host: "127.0.0.1".to_string(),
+        port: NonZeroU16::new(3000).expect("Invalid port number"),
         frontend_hostname: "localhost".to_string(),
+        tls_certificate: None,
+        tls_key: None,
     }));
     connect(config).await
 }

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{
     body::Body,
     http::{
@@ -6,6 +8,8 @@ use axum::{
     },
     response::IntoResponse,
 };
+use rustls::crypto::CryptoProvider;
+use tokio::task::JoinError;
 use tracing::error;
 
 #[derive(Debug)]
@@ -53,6 +57,27 @@ impl From<ToStrError> for HoofprintError {
     }
 }
 
+impl From<std::io::Error> for HoofprintError {
+    fn from(err: std::io::Error) -> Self {
+        error!("IO error: {}", err);
+        HoofprintError::InternalError("IO Error, check the logs!".to_string())
+    }
+}
+
+impl From<JoinError> for HoofprintError {
+    fn from(err: JoinError) -> Self {
+        error!("Join error: {}", err);
+        HoofprintError::InternalError("Join Error, check the logs!".to_string())
+    }
+}
+
+impl From<tower_sessions::session_store::Error> for HoofprintError {
+    fn from(err: tower_sessions::session_store::Error) -> Self {
+        error!("Session store error: {}", err);
+        HoofprintError::InternalError("Session Store Error, check the logs!".to_string())
+    }
+}
+
 impl From<argon2::password_hash::Error> for HoofprintError {
     fn from(err: argon2::password_hash::Error) -> Self {
         error!("Password hashing error: {}", err);
@@ -88,6 +113,18 @@ impl From<sea_orm::DbErr> for HoofprintError {
 impl From<url::ParseError> for HoofprintError {
     fn from(err: url::ParseError) -> Self {
         HoofprintError::InternalError(format!("Failed to parse URL: {}", err))
+    }
+}
+
+impl From<Arc<CryptoProvider>> for HoofprintError {
+    fn from(err: Arc<CryptoProvider>) -> Self {
+        HoofprintError::InternalError(format!("Crypto Error: {:?}", err))
+    }
+}
+
+impl From<std::net::AddrParseError> for HoofprintError {
+    fn from(err: std::net::AddrParseError) -> Self {
+        HoofprintError::InternalError(format!("Address Parse Error: {}", err))
     }
 }
 

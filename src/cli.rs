@@ -1,6 +1,6 @@
 use crate::{get_random_password, password::hash_password, prelude::*};
 
-use std::{num::NonZeroU16, process::ExitCode};
+use std::{num::NonZeroU16, path::PathBuf, process::ExitCode};
 
 use clap::Parser;
 use sea_orm::{ActiveModelTrait, DatabaseConnection, IntoActiveModel};
@@ -28,6 +28,12 @@ pub struct CliOpts {
         action
     )]
     pub reset_admin_password: bool,
+
+    #[clap(env = "HOOFPRINT_TLS_CERTIFICATE")]
+    pub tls_certificate: Option<PathBuf>,
+
+    #[clap(env = "HOOFPRINT_TLS_KEY")]
+    pub tls_key: Option<PathBuf>,
 }
 
 pub async fn handle_admin_reset(db: DatabaseConnection) -> Result<ExitCode, ExitCode> {

@@ -20,6 +20,7 @@ use crate::{db::entities, error::HoofprintError};
 
 pub mod cli;
 pub mod config;
+pub(crate) mod constants;
 pub(crate) mod db;
 pub mod error;
 pub mod logging;

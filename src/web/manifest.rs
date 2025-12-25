@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use crate::prelude::*;
 use axum::http::{HeaderMap, StatusCode, header::CONTENT_TYPE};
 
@@ -51,18 +49,11 @@ pub(crate) struct ManifestResponse {
 #[instrument(skip_all)]
 pub(crate) async fn manifest(
     State(app_state): State<AppState>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Result<impl IntoResponse, HoofprintError> {
-    let hostname = match headers.get("host") {
-        Some(host) => host.to_str()?.to_string(),
-        None => app_state.config.read().await.server_host.clone(),
-    };
-
-    let start_url = Url::from_str(&format!("http://{}", hostname))?;
-
     let manifest = ManifestResponse {
         name: "hoofPrint",
-        start_url,
+        start_url: app_state.base_url().await.parse::<Url>()?,
         display: Some(DisplayOption::MinimalUi),
         display_override: None,
         icons: vec![ManifestIcon {

@@ -27,7 +27,6 @@ use crate::{
 #[template(path = "index.html")]
 pub(crate) struct HomePage {
     codes: Vec<CodeListItem>,
-    user_email: String,
 }
 
 struct CodeListItem {
@@ -72,24 +71,21 @@ pub(crate) async fn homepage(
         })
         .collect();
 
-    Ok(HomePage {
-        codes,
-        user_email: auth.email,
-    })
+    Ok(HomePage { codes })
 }
 
 #[derive(Template, WebTemplate)]
 #[template(path = "view_code.html")]
-#[allow(dead_code)]
+// #[allow(dead_code)]
 pub(crate) struct ViewCodePage {
     pub code: Code,
     pub code_id: Uuid,
     pub code_value: String,
     pub code_name: Option<String>,
-    pub site_name: String,
-    pub created_at: String,
-    pub last_updated: Option<String>,
-    pub is_owner: bool,
+    // pub site_name: String,
+    // pub created_at: String,
+    // pub last_updated: Option<String>,
+    // pub is_owner: bool,
 }
 
 #[instrument(level = "info", skip(app_state, session))]
@@ -98,7 +94,7 @@ pub(crate) async fn view_code(
     Path(code_id_str): Path<String>,
     session: Session,
 ) -> Result<ViewCodePage, HoofprintError> {
-    let auth = app_state.get_authenticated_user(&session).await?;
+    let _auth = app_state.get_authenticated_user(&session).await?;
     // Parse code_id as UUID
     let code_id = Uuid::parse_str(&code_id_str)
         .map_err(|_| HoofprintError::NotFound(format!("Invalid code ID: {}", code_id_str)))?;
@@ -111,7 +107,7 @@ pub(crate) async fn view_code(
         .ok_or_else(|| HoofprintError::NotFound(format!("Code {}", code_id)))?;
 
     let (code_model, site_model) = code_with_site;
-    let site_model = site_model.ok_or_else(|| HoofprintError::InvalidSite)?;
+    let _site_model = site_model.ok_or_else(|| HoofprintError::InvalidSite)?;
 
     // Convert database code to display Code enum
 
@@ -122,10 +118,10 @@ pub(crate) async fn view_code(
         code_id: code_model.id,
         code_value: code_model.value.clone(),
         code_name: code_model.name.clone(),
-        site_name: site_model.name,
-        created_at: code_model.created_at.to_string(),
-        last_updated: code_model.last_updated.map(|dt| dt.to_string()),
-        is_owner: code_model.user_id == auth.user_id,
+        // site_name: site_model.name,
+        // created_at: code_model.created_at.to_string(),
+        // last_updated: code_model.last_updated.map(|dt| dt.to_string()),
+        // is_owner: code_model.user_id == auth.user_id,
     };
 
     Ok(code_page)
@@ -237,8 +233,7 @@ pub(crate) struct EditCodePage {
     pub created_at: String,
     pub last_updated: Option<String>,
     pub error: Option<String>,
-    #[allow(dead_code)]
-    pub uuid_nil: Uuid,
+    // pub uuid_nil: Uuid,
 }
 
 #[instrument(level = "info", skip(app_state, session))]
@@ -286,7 +281,7 @@ pub(crate) async fn edit_code_get(
         code_name: code_model.name.clone(),
         site_id: code_model.site_id.to_string(),
         sites,
-        uuid_nil: Uuid::nil(),
+        // uuid_nil: Uuid::nil(),
         created_at: code_model.created_at.to_string(),
         last_updated: code_model.last_updated.map(|dt| dt.to_string()),
         error: None,

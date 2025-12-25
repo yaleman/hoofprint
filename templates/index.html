@@ -4,8 +4,6 @@
 {% block content %}
 <div>
     <div class="container mb-1rem">
-        <div class="v-middle">Logged in as: {{ user_email }}</div>
-        <div class="flex_grow"></div>
         <div class="flex_right">
             <a href="/logout"><button type="button" class="btn btn-red">Logout</button></a>
             <a href="/scan"><button type="button" class="btn btn-green">Scan Code</button></a>
@@ -30,13 +28,13 @@
             <tr class="code_row">
                 <td class="code_cell">
                     {% if let Some(name) = code.code_name %}
-                    {{ name }}
+                    <a href="/view/{{ code.id }}">{{ name }}</a>
                     {% endif %}
                 </td>
                 <td class="code_cell">{{ code.site_name }}</td>
                 <td class="code_cell">{{ code.code_value }}</td>
                 <td class="code_cell flex_right">
-                    <a href="/view/{{ code.id }}"><button type="button" class="btn">View</button></a>
+                    <!-- <a href="/view/{{ code.id }}"><button type="button" class="btn">View</button></a> -->
                     <a href="/edit/{{ code.id }}"><button type="button" class="btn">Edit</button></a>
                 </td>
             </tr>

@@ -15,6 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
 			lineColor: "#000",
 			displayValue: false
 		});
+	} else {
+		console.debug("No barcode element found.");
 	}
 
 	const qrElement = document.querySelector("#qrcode");
@@ -23,13 +25,18 @@ document.addEventListener("DOMContentLoaded", () => {
 		if (!qrValue) {
 			console.error("No QR code value found!");
 			return;
+		} else {
+			console.debug("QR code value:", qrValue);
 		}
 		new QRCode(qrElement, {
-			width: 128,
-			height: 128,
+			text: qrValue,
+			width: 512,
+			height: 512,
 			colorDark: "#000000",
 			colorLight: "#ffffff",
 			correctLevel: QRCode.CorrectLevel.H,
 		});
+	} else {
+		console.debug("No QR code element found.");
 	}
 });

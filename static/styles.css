@@ -54,9 +54,10 @@ width: 100%; border-collapse: collapse;
     background-color: #f0f0f0;
     padding: 1rem;
     border-radius: 1rem;
-    /* display: inline-block; */
-    margin-bottom: 1rem;
     text-align: center;
+    margin: auto;
+    margin-bottom: 1rem;
+    display: flex;
 }
 .code_string, .edit_link {
     margin-top: 0.5rem;
@@ -75,6 +76,18 @@ width: 100%; border-collapse: collapse;
     max-width: 100%;
     height: auto;
     text-align: center;
+    margin: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.code_image img {
+    max-width: min(90vw, calc(100% - 2rem)) !important;
+    /* max-height: 90vh !important; */
+    height: auto !important;
+    flex-wrap: nowrap;
+
 }
 
 .form_box {
@@ -182,8 +195,16 @@ select {
 
 .flex_right {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 1rem;
+}
+
+.h-middle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .v-middle {
@@ -287,6 +308,9 @@ select {
 
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
+    body, nav, main {
+        padding: 0.35rem;
+    }
     .video-container {
         max-width: 100%;
     }

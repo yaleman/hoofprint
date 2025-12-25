@@ -7,25 +7,28 @@ use super::views;
 /// Creates the application router with all routes
 pub fn routes() -> Router<AppState> {
     Router::new()
-        .route("/", get(views::homepage))
+        .route(Urls::Home.as_ref(), get(views::homepage))
         .route("/view/{code}", get(views::view_code))
         .route(
             "/edit/{code}",
             get(views::edit_code_get).post(views::edit_code_post),
         )
-        .route("/manifest.json", get(super::manifest::manifest))
+        .route(Urls::Manifest.as_ref(), get(super::manifest::manifest))
         .route(
-            "/create",
+            Urls::Create.as_ref(),
             get(views::create_code_get).post(views::create_code_post),
         )
         .route("/delete/{code}", post(views::code_delete))
-        .route("/scan", get(views::scan_get).post(views::scan_post))
         .route(
-            "/login",
+            Urls::Scan.as_ref(),
+            get(views::scan_get).post(views::scan_post),
+        )
+        .route(
+            Urls::Login.as_ref(),
             get(super::auth::get_login).post(super::auth::post_login),
         )
         .route(
-            "/logout",
+            Urls::Logout.as_ref(),
             post(super::auth::logout).get(super::auth::logout),
         )
 }

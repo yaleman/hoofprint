@@ -6,7 +6,7 @@ use super::views;
 
 /// Creates the application router with all routes
 pub fn routes() -> Router<AppState> {
-    Router::new()
+    let requires_auth = Router::new()
         .route(Urls::Home.as_ref(), get(views::homepage))
         .route("/view/{code}", get(views::view_code))
         .route(
@@ -24,11 +24,12 @@ pub fn routes() -> Router<AppState> {
             get(views::scan_get).post(views::scan_post),
         )
         .route(
-            Urls::Login.as_ref(),
-            get(super::auth::get_login).post(super::auth::post_login),
-        )
-        .route(
             Urls::Logout.as_ref(),
             post(super::auth::logout).get(super::auth::logout),
-        )
+        );
+
+    Router::new().merge(requires_auth).route(
+        Urls::Login.as_ref(),
+        get(super::auth::get_login).post(super::auth::post_login),
+    )
 }

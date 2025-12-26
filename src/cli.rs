@@ -1,9 +1,9 @@
-use crate::{get_random_password, password::hash_password, prelude::*};
+use crate::{db::entities::user::reset_admin_password, prelude::*};
 
 use std::{num::NonZeroU16, path::PathBuf, process::ExitCode};
 
 use clap::Parser;
-use sea_orm::{ActiveModelTrait, DatabaseConnection, IntoActiveModel};
+use sea_orm::DatabaseConnection;
 
 #[derive(Parser, Debug)]
 pub struct CliOpts {
@@ -37,33 +37,8 @@ pub struct CliOpts {
 }
 
 pub async fn handle_admin_reset(db: DatabaseConnection) -> Result<ExitCode, ExitCode> {
-    use crate::db::entities::user;
-
-    let new_password = get_random_password(16);
-
-    info!("Resetting admin user credentials");
-    use sea_orm::EntityTrait;
-    let mut admin = user::Entity::find_by_id(Uuid::nil().hyphenated())
-        .one(&db)
-        .await
-        .map_err(|err| {
-            error!("Failed to query admin user: {}", err);
-            ExitCode::FAILURE
-        })?
-        .ok_or_else(|| {
-            error!("Admin user not found");
-            ExitCode::FAILURE
-        })?
-        .into_active_model();
-
-    admin
-        .password
-        .set_if_not_equals(hash_password(&new_password).map_err(|err| {
-            error!("Failed to hash password: {}", err);
-            ExitCode::FAILURE
-        })?);
-    admin.save(&db).await.map_err(|err| {
-        error!("Failed to update admin user: {}", err);
+    let new_password = reset_admin_password(db).await.map_err(|err| {
+        error!("Failed to reset admin user: {}", err);
         ExitCode::FAILURE
     })?;
 

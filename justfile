@@ -26,5 +26,5 @@ docker_run:
         ghcr.io/yaleman/hoofprint:latest
 
 coverage:
-	cargo tarpaulin --coveralls $(COVERALLS_REPO_TOKEN)
+	cargo tarpaulin --coveralls ${COVERALLS_REPO_TOKEN}
 	@echo "Coveralls repo information is at https://coveralls.io/github/yaleman/hoofprint"

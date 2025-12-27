@@ -9,13 +9,39 @@ use crate::{error::HoofprintError, get_random_password, password::hash_password}
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "user")]
 pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false)]
+    #[sea_orm(primary_key, auto_increment = false, default_value = "Uuid::new_v7()")]
     pub id: Uuid,
     pub display_name: String,
     pub email: String,
     pub groups: Json,
     #[serde(skip_serializing)]
     pub password: String,
+}
+
+impl Model {
+    #[cfg(test)]
+    pub(crate) async fn create_new(
+        db: DatabaseConnection,
+        email: &str,
+        display_name: &str,
+        password: Option<&str>,
+    ) -> Result<Model, HoofprintError> {
+        use sea_orm::ActiveValue;
+        use uuid::Uuid;
+        let mut user = ActiveModel {
+            id: ActiveValue::Set(Uuid::now_v7()),
+            email: ActiveValue::Set(email.to_string()),
+            display_name: ActiveValue::Set(display_name.to_string()),
+            groups: ActiveValue::Set(serde_json::json!([])),
+            password: ActiveValue::NotSet,
+        };
+        if let Some(password) = password {
+            user.password = ActiveValue::Set(hash_password(password)?);
+        };
+
+        let user = user.insert(&db).await?;
+        Ok(user)
+    }
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

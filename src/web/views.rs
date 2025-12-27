@@ -62,11 +62,9 @@ pub(crate) async fn homepage(
 
             CodeListItem {
                 id: code_model.id,
-                // code_type: code_model.type_,
                 code_value: code_model.value,
                 code_name: code_model.name.clone(),
                 site_name,
-                // created_at: code_model.created_at.to_string(),
             }
         })
         .collect();
@@ -82,10 +80,6 @@ pub(crate) struct ViewCodePage {
     pub code_id: Uuid,
     pub code_value: String,
     pub code_name: Option<String>,
-    // pub site_name: String,
-    // pub created_at: String,
-    // pub last_updated: Option<String>,
-    // pub is_owner: bool,
 }
 
 #[instrument(level = "debug", skip(app_state, session))]
@@ -94,13 +88,14 @@ pub(crate) async fn view_code(
     Path(code_id_str): Path<String>,
     session: Session,
 ) -> Result<ViewCodePage, HoofprintError> {
-    let _auth = app_state.get_authenticated_user(&session).await?;
+    let auth = app_state.get_authenticated_user(&session).await?;
     // Parse code_id as UUID
     let code_id = Uuid::parse_str(&code_id_str)
         .map_err(|_| HoofprintError::NotFound(format!("Invalid code ID: {}", code_id_str)))?;
 
     // Fetch code from database with related site
     let code_with_site = code::Entity::find_by_id(code_id)
+        .filter(code::Column::UserId.eq(auth.user_id))
         .find_also_related(site::Entity)
         .one(&app_state.db)
         .await?
@@ -150,8 +145,10 @@ pub(crate) struct SiteOption {
 #[instrument(level = "debug")]
 pub(crate) async fn create_code_get(
     State(app_state): State<AppState>,
-    _session: Session,
+    session: Session,
 ) -> Result<CreateCodePage, HoofprintError> {
+    app_state.get_authenticated_user(&session).await?;
+
     // Fetch all sites for dropdown
     let sites_models = site::Entity::find().all(&app_state.db).await?;
 
@@ -243,6 +240,7 @@ pub(crate) async fn edit_code_get(
 
     // Fetch code from database
     let code_model = code::Entity::find_by_id(code_id)
+        .filter(code::Column::UserId.eq(auth.user_id))
         .one(&app_state.db)
         .await?
         .ok_or_else(|| HoofprintError::NotFound(format!("Code {}", code_id)))?;
@@ -303,6 +301,7 @@ pub(crate) async fn edit_code_post(
 
     // Fetch existing code from database
     let code_model = code::Entity::find_by_id(code_id)
+        .filter(code::Column::UserId.eq(auth.user_id))
         .one(&app_state.db)
         .await?
         .ok_or_else(|| HoofprintError::NotFound(format!("Code {}", code_id)))?;
@@ -355,6 +354,7 @@ pub(crate) async fn code_delete(
 
     // Fetch code from database
     let code_model = code::Entity::find_by_id(code_id)
+        .filter(code::Column::UserId.eq(auth.user_id))
         .one(&app_state.db)
         .await?
         .ok_or_else(|| HoofprintError::NotFound(format!("Code {}", code_id)))?;

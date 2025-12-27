@@ -49,3 +49,6 @@ tower-sessions-sqlx-store = { version = "0.15.0", features = ["sqlite"] }
 tracing = { version = "0.1.44", features = ["log", "release_max_level_debug"] }
 url = "2.5.7"
 uuid = { version = "1.19.0", features = ["v7"] }
+
+[dev-dependencies]
+axum-test = "18.4.1"

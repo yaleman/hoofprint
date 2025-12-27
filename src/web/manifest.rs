@@ -46,14 +46,14 @@ pub(crate) struct ManifestResponse {
     display_override: Option<Vec<String>>,
 }
 
-#[instrument(skip_all)]
+#[instrument(level = "debug", skip_all)]
 pub(crate) async fn manifest(
     State(app_state): State<AppState>,
     _headers: HeaderMap,
 ) -> Result<impl IntoResponse, HoofprintError> {
     let manifest = ManifestResponse {
         name: "hoofPrint",
-        start_url: app_state.base_url().await.parse::<Url>()?,
+        start_url: app_state.base_url.parse()?,
         display: Some(DisplayOption::MinimalUi),
         display_override: None,
         icons: vec![ManifestIcon {
@@ -69,4 +69,23 @@ pub(crate) async fn manifest(
         Json(manifest),
     );
     Ok(res)
+}
+
+#[tokio::test]
+async fn test_manifest_response() {
+    let app_state = AppState::test().await;
+    let response = manifest(State(app_state), HeaderMap::new())
+        .await
+        .expect("Failed to get manifest response");
+    let (parts, _body) = response.into_response().into_parts();
+    assert_eq!(parts.status, StatusCode::OK);
+    assert_eq!(
+        parts
+            .headers
+            .get(CONTENT_TYPE)
+            .expect("Content-Type header missing")
+            .to_str()
+            .expect("Failed to convert Content-Type header to str"),
+        MIME_TYPE_MANIFEST
+    );
 }

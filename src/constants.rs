@@ -1,3 +1,5 @@
+pub(crate) const GENERIC_SITE: &str = "Generic Site";
+
 pub(crate) enum Urls {
     Home,
     Login,
@@ -5,6 +7,7 @@ pub(crate) enum Urls {
     Scan,
     Create,
     Manifest,
+    Static,
 }
 
 impl AsRef<str> for Urls {
@@ -15,7 +18,8 @@ impl AsRef<str> for Urls {
             Urls::Logout => "/logout",
             Urls::Scan => "/scan",
             Urls::Create => "/create",
-            Urls::Manifest => "/manifest.json",
+            Urls::Manifest => "/manifest.webmanifest",
+            Urls::Static => "/static/",
         }
     }
 }

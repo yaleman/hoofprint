@@ -45,7 +45,7 @@ pub(crate) struct LoginPage {
     pub error: Option<String>,
 }
 
-#[instrument(skip_all)]
+#[instrument(level = "debug", skip_all)]
 pub(crate) async fn get_login() -> Result<LoginPage, HoofprintError> {
     let login_page = LoginPage {
         email: "".to_string(),
@@ -63,7 +63,7 @@ pub(crate) struct LoginForm {
     error: Option<String>,
 }
 
-#[instrument(skip(form, app_state, session), fields(email = %form.email))]
+#[instrument(level="debug", skip(form, app_state, session), fields(email = %form.email))]
 pub(crate) async fn post_login(
     app_state: State<AppState>,
     session: Session,
@@ -118,7 +118,7 @@ pub(crate) async fn post_login(
     Ok((StatusCode::SEE_OTHER, [(LOCATION, "/")]).into_response())
 }
 
-#[instrument(skip_all, fields(user_id = %session.get::<String>(AUTH_USER_ID).await?.unwrap_or("unknown-user".to_string())))]
+#[instrument(level="debug",skip_all, fields(user_id = %session.get::<String>(AUTH_USER_ID).await?.unwrap_or("unknown-user".to_string())))]
 pub(crate) async fn logout(session: Session) -> Result<axum::response::Response, HoofprintError> {
     let userid: String = session
         .get(AUTH_USER_ID)

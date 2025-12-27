@@ -12,22 +12,6 @@ use sea_orm::{
 use sea_orm_migration::prelude::*;
 use tracing::{info, instrument};
 
-#[cfg(test)]
-pub async fn test_connect() -> Result<DatabaseConnection, HoofprintError> {
-    use std::{num::NonZeroU16, sync::Arc};
-
-    use crate::config::Configuration;
-    let config = Arc::new(RwLock::new(Configuration {
-        database_file: ":memory:".to_string(),
-        host: "127.0.0.1".to_string(),
-        port: NonZeroU16::new(3000).expect("Invalid port number"),
-        frontend_hostname: "localhost".to_string(),
-        tls_certificate: None,
-        tls_key: None,
-    }));
-    connect(config).await
-}
-
 #[instrument(level = "debug", skip_all)]
 pub async fn connect(config: SendableConfig) -> Result<DatabaseConnection, HoofprintError> {
     let mut connect_options = ConnectOptions::new(get_connect_string(config).await);
@@ -80,7 +64,9 @@ async fn get_connect_string(config: SendableConfig) -> String {
 
 #[tokio::test]
 async fn test_test_connect() {
-    test_connect()
+    let config = crate::config::Configuration::test();
+
+    crate::db::connect(Arc::new(RwLock::new(config)))
         .await
         .expect("failed to connect to test database");
 }

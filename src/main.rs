@@ -37,7 +37,7 @@ async fn main() -> Result<ExitCode, ExitCode> {
         return handle_admin_reset(db.clone()).await;
     }
 
-    let app_state = hoofprint::web::AppState::new(db, config);
+    let app_state = hoofprint::web::AppState::new(db, config).await;
 
     tokio::select!(
         biased;

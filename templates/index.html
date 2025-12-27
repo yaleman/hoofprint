@@ -14,33 +14,22 @@
     {% if codes.is_empty() %}
     <p>No codes yet. <a href="/create">Create your first code</a>!</p>
     {% else %}
-    <table class="codes_table">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Site</th>
-                <th>Value</th>
-                <th><!-- Actions --></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for code in codes %}
-            <tr class="code_row">
-                <td class="code_cell">
-                    {% if let Some(name) = code.code_name %}
-                    <a href="/view/{{ code.id }}">{{ name }}</a>
-                    {% endif %}
-                </td>
-                <td class="code_cell">{{ code.site_name }}</td>
-                <td class="code_cell">{{ code.code_value }}</td>
-                <td class="code_cell flex_right">
-                    <!-- <a href="/view/{{ code.id }}"><button type="button" class="btn">View</button></a> -->
-                    <a href="/edit/{{ code.id }}"><button type="button" class="btn">Edit</button></a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="code_blocks">
+        {% for code in codes %}
+
+        <a href="/view/{{ code.id }}">
+            <div class="code_preview_box">
+                {% if let Some(name) = code.code_name %}
+                <div class="code_preview_name">{{ name }}</div>
+                {% endif %}
+                {% if code.site_name != crate::constants::GENERIC_SITE %}
+                <div class="code_cell">{{ code.site_name }}</div>
+                {% endif %}
+                <div class="code_cell code_value">{{ code.code_value }}</div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
     {% endif %}
 </div>
 {% endblock content %}

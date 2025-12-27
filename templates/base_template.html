@@ -3,7 +3,7 @@
         <title>{% block title %}HoofPrint{% endblock %}</title>
         <link rel="icon" type="image/png" href="/static/img/128x128logo.png" />
         <link rel="icon" type="image/svg+xml" href="/static/img/logo.svg" />
-        <link rel="manifest" href="/manifest.json" />
+        <link rel="manifest" href="{{ crate::constants::Urls::Manifest.as_ref() }}" />
         {% block scripts %}
 
         {% endblock scripts %}
@@ -13,7 +13,7 @@
         {% block header %}
         <nav>
             <h1 class="logo">
-                <a href="/">
+                <a href="/" class="logo">
                     <img class="logo" src="/static/img/logo.png" alt="HoofPrint" /> hoofPrint
                 </a>
             </h1>

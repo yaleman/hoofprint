@@ -2,11 +2,6 @@
 {% block title %}Scan Code - HoofPrint{% endblock %}
 
 {% block scripts %}
-<script type="module">
-    import { scanImageData } from '/static/zbar-wasm/index.mjs';
-    // Make available to scan.js
-    window.scanImageData = scanImageData;
-</script>
 <script type="module" src="/static/scan.js"></script>
 {% endblock scripts %}
 
@@ -48,8 +43,8 @@
 
         <form method="post" action="/scan">
             <!-- Hidden inputs for code type and value -->
-            <input type="hidden" id="code_type" name="code_type" value="">
-            <input type="hidden" id="code_value" name="code_value" value="">
+            <input type="hidden" id="code_type" name="code_type" value>
+            <input type="hidden" id="code_value" name="code_value" value>
 
             <div class="info-box">
                 <label class="form_label">Detected Code:</label>
@@ -67,14 +62,14 @@
             <div>
                 <label for="site_id" class="form_label">Site (Optional):</label>
                 <select id="site_id" name="site_id" class="form_select">
-                    <option value="{{ uuid_nil }}" selected>Generic Site (default)</option>
+                    <option value="{{ uuid_nil }}" selected>{{ crate::constants::GENERIC_SITE }} (default)</option>
                     {% for site in sites %}
                     {% if site.id != uuid_nil %}
                     <option value="{{ site.id }}">{{ site.name }}</option>
                     {% endif %}
                     {% endfor %}
                 </select>
-                <small class="form_sublabel">The site/shop this code is for (defaults to Generic Site)</small>
+                <small class="form_sublabel">The site/shop this code is for (defaults to {{ crate::constants::GENERIC_SITE }})</small>
             </div>
 
             <div>

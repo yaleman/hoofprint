@@ -1,8 +1,8 @@
 {% extends "base_template.html" %}
 
 {% block scripts %}
-<script src="/static/JsBarcode.all.min.js"></script>
-<script src="/static/qrcode.min.js"></script>
+<script src="/static/ext/JsBarcode.all.min.js"></script>
+<script src="/static/ext/qrcode.min.js"></script>
 <script src="/static/view.js"></script>
 {% endblock scripts %}
 
@@ -21,7 +21,7 @@
     <div class="flex_grow"></div>
 </div>
 
-<div class="code_string">{{ code_value }} </div>
+<div class="code_string code_value">{{ code_value }} </div>
 
 <div class="edit_link">
     <a href="/edit/{{ code_id }}">Edit</a>

@@ -2,6 +2,8 @@ use sea_orm::{ActiveModelTrait, ActiveValue::Set, EntityTrait};
 use sea_orm_migration::prelude::*;
 use uuid::Uuid;
 
+use crate::constants::GENERIC_SITE;
+
 pub struct Migration;
 
 impl MigrationName for Migration {
@@ -26,7 +28,7 @@ impl MigrationTrait for Migration {
             // Create the default site using ActiveModel
             let default_site = crate::db::entities::site::ActiveModel {
                 id: Set(Uuid::nil()),
-                name: Set("Generic Site".to_string()),
+                name: Set(GENERIC_SITE.to_string()),
                 url: Set(String::new()),
                 created_at: Set(time::PrimitiveDateTime::new(
                     time::OffsetDateTime::now_utc().date(),

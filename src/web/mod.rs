@@ -1,6 +1,8 @@
 pub(crate) mod auth;
 pub(crate) mod forms;
+pub(crate) mod logging;
 pub(crate) mod manifest;
+pub(crate) mod middleware;
 pub mod routes;
 pub mod sessions;
 pub mod state;
@@ -8,7 +10,8 @@ pub(crate) mod views;
 
 use std::{net::SocketAddr, path::PathBuf};
 
-use tower_http::{compression::CompressionLayer, services::ServeDir, trace::TraceLayer};
+use axum::middleware::{from_fn, from_fn_with_state};
+use tower_http::{compression::CompressionLayer, services::ServeDir};
 use tracing::{error, info, instrument};
 
 pub use state::AppState;
@@ -34,13 +37,18 @@ pub async fn start_server(app_state: AppState) -> Result<(), HoofprintError> {
         .quality(tower_http::CompressionLevel::Best);
 
     let app = routes::routes()
-        .with_state(app_state)
+        .with_state(app_state.clone())
         .layer(session_layer)
         .nest_service(
             "/static",
             ServeDir::new(PathBuf::from("./static/")).precompressed_br(),
         )
-        .layer(compression_layer);
+        .layer(from_fn_with_state(
+            app_state,
+            middleware::headers::apply_headers,
+        ))
+        .layer(compression_layer)
+        .layer(from_fn(middleware::logging::logger));
 
     let addr = format!("{}:{}", host, port);
     let addr = addr.parse::<SocketAddr>().map_err(|err| {
@@ -76,7 +84,7 @@ pub async fn start_server(app_state: AppState) -> Result<(), HoofprintError> {
             info!("Starting server on http://{}:{}", frontend_hostname, port);
 
             axum_server::bind(addr)
-                .serve(app.layer(TraceLayer::new_for_http()).into_make_service())
+                .serve(app.into_make_service())
                 .await?;
         }
     }

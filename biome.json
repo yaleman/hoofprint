@@ -3,13 +3,15 @@
 	"linter": {
 		"rules": {
 			"correctness": {
-				"noUnknownSelectorPseudoElement": "off"
+			},
+			"complexity" : {
+				"noImportantStyles" : "off"
 			}
 		}
 	},
 	"html": {
 		"parser": {
-			"interpolation": true
+			"interpolation" : true
 		}
 	}
 }

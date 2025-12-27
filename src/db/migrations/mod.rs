@@ -23,11 +23,17 @@ impl MigratorTrait for Migrator {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use sea_orm_migration::MigratorTrait;
+    use tokio::sync::RwLock;
+
+    use crate::config::Configuration;
 
     #[tokio::test]
     async fn test_migrator() {
-        let db = crate::db::test_connect()
+        let config = Configuration::test();
+        let db = crate::db::connect(Arc::new(RwLock::new(config)))
             .await
             .expect("Failed to connect to test DB");
 

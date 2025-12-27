@@ -38,7 +38,6 @@
         <div>
             <label for="site_id" class="form_label">Site:</label>
             <select id="site_id" name="site_id" required class="form_select">
-                <!-- <option value="{{ uuid_nil }}">Generic site</option> -->
                 {% for site in sites %}
                 <option value="{{ site.id }}">{{ site.name }}</option>
                 {% endfor %}

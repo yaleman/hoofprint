@@ -38,7 +38,7 @@ struct CodeListItem {
 }
 
 /// Homepage handler that returns a simple HTML response
-#[instrument(level = "info", skip_all)]
+#[instrument(level = "debug", skip_all)]
 pub(crate) async fn homepage(
     State(app_state): State<AppState>,
     session: Session,
@@ -88,7 +88,7 @@ pub(crate) struct ViewCodePage {
     // pub is_owner: bool,
 }
 
-#[instrument(level = "info", skip(app_state, session))]
+#[instrument(level = "debug", skip(app_state, session))]
 pub(crate) async fn view_code(
     State(app_state): State<AppState>,
     Path(code_id_str): Path<String>,
@@ -132,7 +132,6 @@ pub(crate) async fn view_code(
 pub(crate) struct CreateCodePage {
     pub sites: Vec<SiteOption>,
     pub error: Option<String>,
-    pub uuid_nil: String,
 }
 
 #[derive(Template, WebTemplate)]
@@ -148,7 +147,7 @@ pub(crate) struct SiteOption {
     pub name: String,
 }
 
-#[instrument(level = "info")]
+#[instrument(level = "debug")]
 pub(crate) async fn create_code_get(
     State(app_state): State<AppState>,
     _session: Session,
@@ -165,14 +164,10 @@ pub(crate) async fn create_code_get(
         })
         .collect();
 
-    Ok(CreateCodePage {
-        sites,
-        error: None,
-        uuid_nil: Uuid::nil().to_string(),
-    })
+    Ok(CreateCodePage { sites, error: None })
 }
 
-#[instrument(level = "info")]
+#[instrument(level = "debug")]
 pub(crate) async fn create_code_post(
     State(app_state): State<AppState>,
     session: Session,
@@ -233,10 +228,9 @@ pub(crate) struct EditCodePage {
     pub created_at: String,
     pub last_updated: Option<String>,
     pub error: Option<String>,
-    // pub uuid_nil: Uuid,
 }
 
-#[instrument(level = "info", skip(app_state, session))]
+#[instrument(level = "debug", skip(app_state, session))]
 pub(crate) async fn edit_code_get(
     State(app_state): State<AppState>,
     Path(code_id_str): Path<String>,
@@ -281,7 +275,6 @@ pub(crate) async fn edit_code_get(
         code_name: code_model.name.clone(),
         site_id: code_model.site_id.to_string(),
         sites,
-        // uuid_nil: Uuid::nil(),
         created_at: code_model.created_at.to_string(),
         last_updated: code_model.last_updated.map(|dt| dt.to_string()),
         error: None,
@@ -290,7 +283,7 @@ pub(crate) async fn edit_code_get(
     Ok(page)
 }
 
-#[instrument(level = "info", skip(app_state, session, form))]
+#[instrument(level = "debug", skip(app_state, session, form))]
 pub(crate) async fn edit_code_post(
     State(app_state): State<AppState>,
     Path(code_id_str): Path<String>,
@@ -349,7 +342,7 @@ pub(crate) async fn edit_code_post(
     Ok(Redirect::to(&format!("/view/{}", code_id)))
 }
 
-#[instrument(level = "info", skip(app_state, session))]
+#[instrument(level = "debug", skip(app_state, session))]
 pub(crate) async fn code_delete(
     State(app_state): State<AppState>,
     Path(code_id_str): Path<String>,
@@ -380,11 +373,13 @@ pub(crate) async fn code_delete(
     Ok(Redirect::to("/"))
 }
 
-#[instrument(level = "info")]
+#[instrument(level = "debug", skip_all)]
 pub(crate) async fn scan_get(
     State(app_state): State<AppState>,
-    _session: Session,
+    session: Session,
 ) -> Result<ScanCodePage, HoofprintError> {
+    app_state.get_authenticated_user(&session).await?;
+
     // Fetch all sites for dropdown
     let sites_models = site::Entity::find().all(&app_state.db).await?;
 
@@ -403,7 +398,8 @@ pub(crate) async fn scan_get(
         uuid_nil: Uuid::nil().to_string(),
     })
 }
-#[instrument(level = "info", skip(app_state, session, form), fields(site_id = %form.site_id, code_type = %form.code_type))]
+
+#[instrument(level = "debug", skip_all, fields(site_id = %form.site_id, code_type = %form.code_type))]
 pub(crate) async fn scan_post(
     State(app_state): State<AppState>,
     session: Session,

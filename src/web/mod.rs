@@ -92,3 +92,15 @@ pub async fn start_server(app_state: AppState) -> Result<(), HoofprintError> {
     cleanup_task.await??;
     Ok(())
 }
+
+#[tokio::test]
+async fn test_start_server() {
+    let app_state = AppState::test().await;
+    let server_task = tokio::spawn(async move {
+        if let Err(e) = start_server(app_state).await {
+            panic!("Server failed to start: {:?}", e);
+        }
+    });
+    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+    server_task.abort();
+}

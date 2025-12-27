@@ -33,3 +33,10 @@ pub fn routes() -> Router<AppState> {
         get(super::auth::get_login).post(super::auth::post_login),
     )
 }
+
+#[test]
+fn test_get_router() {
+    let router = routes();
+    dbg!(&router);
+    let _test = router.without_v07_checks();
+}

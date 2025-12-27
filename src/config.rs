@@ -22,7 +22,7 @@ impl Configuration {
     pub(crate) fn test() -> Self {
         Self {
             database_file: ":memory:".to_string(),
-            host: "localhost".to_string(),
+            host: "127.0.0.1".to_string(),
             port: 0,
             frontend_hostname: "localhost".to_string(),
             tls_certificate: None,

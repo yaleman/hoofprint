@@ -26,6 +26,8 @@ pub mod error;
 pub mod logging;
 pub(crate) mod password;
 pub mod prelude;
+#[cfg(test)]
+pub mod tests;
 pub mod web;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

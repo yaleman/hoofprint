@@ -2,12 +2,12 @@
 
 use crate::{Code, prelude::*};
 
-#[derive(Debug, Deserialize)]
-pub struct CreateCodeForm {
-    pub code_type: String,
-    pub code_value: String,
-    pub site_id: String,
-    pub code_name: Option<String>,
+#[derive(Debug, Deserialize, Serialize)]
+pub(crate) struct CreateCodeForm {
+    pub(crate) code_type: String,
+    pub(crate) code_value: String,
+    pub(crate) site_id: String,
+    pub(crate) code_name: Option<String>,
 }
 
 impl CreateCodeForm {

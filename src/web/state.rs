@@ -72,4 +72,10 @@ impl AppState {
             .expect("Failed to connect to test database!");
         Self::new(db, config).await
     }
+
+    #[cfg(test)]
+    pub(crate) async fn test_with_db(db: DatabaseConnection) -> Self {
+        let config = Arc::new(RwLock::new(crate::config::Configuration::test()));
+        Self::new(db, config).await
+    }
 }

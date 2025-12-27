@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::SystemTimeError};
 
 use axum::{
     body::Body,
@@ -75,6 +75,13 @@ impl From<tower_sessions::session_store::Error> for HoofprintError {
     fn from(err: tower_sessions::session_store::Error) -> Self {
         error!("Session store error: {}", err);
         HoofprintError::InternalError("Session Store Error, check the logs!".to_string())
+    }
+}
+
+impl From<SystemTimeError> for HoofprintError {
+    fn from(err: SystemTimeError) -> Self {
+        error!("System time error: {}", err);
+        HoofprintError::InternalError("System Time Error, check the logs!".to_string())
     }
 }
 

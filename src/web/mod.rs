@@ -10,25 +10,22 @@ pub(crate) mod views;
 
 use std::{net::SocketAddr, path::PathBuf};
 
-use axum::middleware::{from_fn, from_fn_with_state};
+use axum::{
+    Router,
+    middleware::{from_fn, from_fn_with_state},
+};
+use tokio::task::JoinHandle;
 use tower_http::{compression::CompressionLayer, services::ServeDir};
+use tower_sessions::session_store;
 use tracing::{error, info, instrument};
 
 pub use state::AppState;
 
 use crate::error::HoofprintError;
 
-/// Starts the web server with the given application state
-#[instrument(level = "debug", skip_all)]
-pub async fn start_server(app_state: AppState) -> Result<(), HoofprintError> {
-    let config = app_state.config.read().await;
-    let host = config.host.clone();
-    let port = config.port;
-    let frontend_hostname = config.frontend_hostname.clone();
-    let tls_certificate = config.tls_certificate.clone();
-    let tls_key = config.tls_key.clone();
-    drop(config); // Release the lock
-
+pub async fn server_inner(
+    app_state: AppState,
+) -> Result<(Router, JoinHandle<Result<(), session_store::Error>>), HoofprintError> {
     let (session_layer, cleanup_task) = sessions::create_session_layer(&app_state).await?;
 
     let compression_layer = CompressionLayer::new()
@@ -36,7 +33,7 @@ pub async fn start_server(app_state: AppState) -> Result<(), HoofprintError> {
         .deflate(true)
         .quality(tower_http::CompressionLevel::Best);
 
-    let app = routes::routes()
+    let router = routes::routes()
         .with_state(app_state.clone())
         .layer(session_layer)
         .nest_service(
@@ -49,7 +46,21 @@ pub async fn start_server(app_state: AppState) -> Result<(), HoofprintError> {
         ))
         .layer(compression_layer)
         .layer(from_fn(middleware::logging::logger));
+    Ok((router, cleanup_task))
+}
 
+/// Starts the web server with the given application state
+#[instrument(level = "debug", skip_all)]
+pub async fn start_server(app_state: AppState) -> Result<(), HoofprintError> {
+    let config = app_state.config.read().await;
+    let host = config.host.clone();
+    let port = config.port;
+    let frontend_hostname = config.frontend_hostname.clone();
+    let tls_certificate = config.tls_certificate.clone();
+    let tls_key = config.tls_key.clone();
+    drop(config); // Release the lock
+
+    let (app, cleanup_task) = server_inner(app_state.clone()).await?;
     let addr = format!("{}:{}", host, port);
     let addr = addr.parse::<SocketAddr>().map_err(|err| {
         error!(address=?addr, error=?err, "Failed to parse listener address");

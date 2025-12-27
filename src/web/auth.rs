@@ -55,12 +55,12 @@ pub(crate) async fn get_login() -> Result<LoginPage, HoofprintError> {
     Ok(login_page)
 }
 
-#[derive(Deserialize, Template, WebTemplate)]
+#[derive(Serialize, Deserialize, Template, WebTemplate)]
 #[template(path = "login_form.html")]
 pub(crate) struct LoginForm {
-    email: String,
-    password: String,
-    error: Option<String>,
+    pub(crate) email: String,
+    pub(crate) password: String,
+    pub(crate) error: Option<String>,
 }
 
 #[instrument(level="debug", skip(form, app_state, session), fields(email = %form.email))]

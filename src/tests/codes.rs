@@ -98,6 +98,13 @@ async fn test_code_create() {
     let response = server.get(location).await;
     assert_eq!(response.status_code(), 200);
 
+    let response = server.get(Urls::Home.as_ref()).await;
+    assert_eq!(response.status_code(), 200);
+    response.assert_text_contains("Test Code");
+    response.assert_text_contains("123456");
+    response.assert_text_contains(code);
+
+    // try to view a code that doesn't belong to us
     let admin_code = code::Model::create_new(
         db.clone(),
         Uuid::nil(),

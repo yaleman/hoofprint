@@ -30,3 +30,13 @@ pub(crate) fn verify_password(input_password: &str, db_hashed: &str) -> Result<(
         .verify_password(input_password.as_bytes(), &parsed_hash)
         .map_err(|_| HoofprintError::Authentication)
 }
+
+#[test]
+fn test_password_hashing() {
+    let password = crate::get_random_password(16);
+    let hashed = hash_password(&password).expect("Hashing failed");
+    dbg!(&password, &hashed);
+    assert!(verify_password(&password, &hashed).is_ok());
+    assert!(verify_password("WrongPassword", &hashed).is_err());
+    assert!(hashed.contains("argon2id"))
+}

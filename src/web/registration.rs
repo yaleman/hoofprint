@@ -84,5 +84,11 @@ pub(crate) async fn post_register(
     };
     info!(email=%form.email, "Created new user account");
 
-    Ok(Redirect::to(Urls::Login.as_ref()))
+    let redirect_url = format!(
+        "{}?success=Account created successfully! Please log in.&email={}",
+        Urls::Login.as_ref(),
+        form.email
+    );
+
+    Ok(Redirect::to(&redirect_url))
 }

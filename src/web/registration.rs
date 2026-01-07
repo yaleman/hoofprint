@@ -36,10 +36,11 @@ pub(crate) async fn post_register(
         return Ok(Redirect::to(Urls::Home.as_ref()));
     };
 
-    if let Some(_) = user::Entity::find()
+    if user::Entity::find()
         .filter(user::Column::Email.eq(form.email.clone()))
         .one(&app_state.db)
         .await?
+        .is_some()
     {
         let redirect_url = format!(
             "{}?error=User with that email already exists!&email={}&name={}",

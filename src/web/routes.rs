@@ -28,10 +28,20 @@ pub fn routes() -> Router<AppState> {
             post(super::auth::logout).get(super::auth::logout),
         );
 
-    Router::new().merge(requires_auth).route(
-        Urls::Login.as_ref(),
-        get(super::auth::get_login).post(super::auth::post_login),
-    )
+    Router::new()
+        .merge(requires_auth)
+        .route(
+            Urls::Register.as_ref(),
+            get(super::registration::get_register).post(super::registration::post_register),
+        )
+        .route(
+            Urls::Login.as_ref(),
+            get(super::auth::get_login).post(super::auth::post_login),
+        )
+        .route(
+            Urls::CspReportOnly.as_ref(),
+            post(super::views::csp_report_only),
+        )
 }
 
 #[test]

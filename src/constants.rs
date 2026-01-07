@@ -8,6 +8,8 @@ pub(crate) enum Urls {
     Create,
     Manifest,
     Static,
+    CspReportOnly,
+    Register,
 }
 
 impl AsRef<str> for Urls {
@@ -20,6 +22,8 @@ impl AsRef<str> for Urls {
             Urls::Create => "/create",
             Urls::Manifest => "/manifest.webmanifest",
             Urls::Static => "/static/",
+            Urls::CspReportOnly => "/csp/reportOnly",
+            Urls::Register => "/register",
         }
     }
 }

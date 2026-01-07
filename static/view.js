@@ -10,10 +10,10 @@ document.addEventListener("DOMContentLoaded", () => {
 			console.error("No barcode value found!");
 			return;
 		}
-		JsBarcode("#barcode", barcodeValue,{
+		JsBarcode("#barcode", barcodeValue, {
 			format: "code128",
 			lineColor: "#000",
-			displayValue: false
+			displayValue: false,
 		});
 	} else {
 		console.debug("No barcode element found.");

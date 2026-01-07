@@ -1,10 +1,11 @@
 //! User entity for hoofprint
 
+use crate::{error::HoofprintError, get_random_password, password::hash_password};
+use sea_orm::ActiveValue;
 use sea_orm::{IntoActiveModel, entity::prelude::*};
 use serde::{Deserialize, Serialize};
 use tracing::info;
-
-use crate::{error::HoofprintError, get_random_password, password::hash_password};
+use uuid::Uuid;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "user")]
@@ -19,15 +20,12 @@ pub struct Model {
 }
 
 impl Model {
-    #[cfg(test)]
     pub(crate) async fn create_new(
         db: DatabaseConnection,
         email: &str,
         display_name: &str,
         password: Option<&str>,
     ) -> Result<Model, HoofprintError> {
-        use sea_orm::ActiveValue;
-        use uuid::Uuid;
         let mut user = ActiveModel {
             id: ActiveValue::Set(Uuid::now_v7()),
             email: ActiveValue::Set(email.to_string()),

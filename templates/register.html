@@ -7,16 +7,18 @@
 <div class="error">{{ error_string }}</div>
 {% endif %}
 
-{% if let Some(success_message) = success %}
-<div class="success">{{ success_message }}</div>
-{% endif %}
+<h1>Register for HoofPrints</h1>
 
-<form action="/login" method="post" class="login_form">
-    <div class="login_form_container">
-        <h2>Login</h2>
+<p>HoofPrints is a platform for storing your Membership cards and other Bar Codes/QR Codes</p>
 
-        <p>Need to register? <a href="{{ Urls::Register.as_ref() }}">Create an account</a></p>
+<p>Create an account to get started.</p>
 
+<form action="{{ Urls::Register.as_ref() }}" method="post" class="register_form">
+    <div class="form_container">
+        <div class="form_box h-middle">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" value="{{ name }}" required>
+        </div>
         <div class="form_box h-middle">
             <label for="email">Email:</label>
             <input type="text" id="email" name="email" value="{{ email }}" required>
@@ -28,7 +30,7 @@
         </div>
 
         <div class="form_box h-middle">
-            <button type="submit" class="btn btn-purple">Login</button>
+            <button type="submit" class="btn btn-purple">Register</button>
         </div>
     </div>
 </form>

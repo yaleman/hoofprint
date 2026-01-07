@@ -62,6 +62,7 @@ async fn test_code_create() {
             email: TEST_USER_EMAIL.to_string(),
             password: TEST_USER_PASSWORD.to_string(),
             error: None,
+            success: None,
         })
         .await;
     dbg!(&response);

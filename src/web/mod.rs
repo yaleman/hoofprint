@@ -3,6 +3,7 @@ pub(crate) mod forms;
 pub(crate) mod logging;
 pub(crate) mod manifest;
 pub(crate) mod middleware;
+pub(crate) mod registration;
 pub mod routes;
 pub mod sessions;
 pub mod state;

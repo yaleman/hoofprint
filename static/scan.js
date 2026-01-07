@@ -92,7 +92,7 @@ async function startScanning() {
 		canvas.height = video.videoHeight;
 
 		// Update UI
-		startButton.style.display = "none";
+		startButton.classList.add("hidden");
 		stopButton.style.display = "inline-block";
 		video.style.border = "3px solid var(--color-blue)";
 
@@ -296,12 +296,12 @@ function scanAgain() {
 function showError(message) {
 	if (errorContainer) {
 		errorContainer.textContent = message;
-		errorContainer.style.display = "block";
+		errorContainer.classList.remove("hidden");
 	}
 }
 
 function hideError() {
 	if (errorContainer) {
-		errorContainer.style.display = "none";
+		errorContainer.classList.add("hidden");
 	}
 }

@@ -3,6 +3,7 @@ use std::time::SystemTime;
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::{
+    body::Bytes,
     extract::{Form, Path, State},
     response::Redirect,
 };
@@ -450,4 +451,21 @@ pub(crate) async fn scan_post(
 
     // Redirect to view page
     Ok(Redirect::to(&format!("/view/{}", new_code_id)))
+}
+
+pub(crate) async fn csp_report_only(body: Bytes) -> Result<(), HoofprintError> {
+    // For now, just log that a report was received.
+    // In a real application, you would parse and store the report details.
+    let body_string = String::from_utf8_lossy(&body);
+    let body_json = serde_json::from_str::<serde_json::Value>(&body_string);
+    #[allow(clippy::expect_used)]
+    if let Ok(json) = body_json {
+        tracing::info!(
+            "CSP Report-Only violation reported:\n {}",
+            serde_json::to_string_pretty(&json).expect("Failed to pretty-print JSON")
+        );
+    } else {
+        tracing::info!("CSP Report-Only violation reported: {:?}", body_string);
+    }
+    Ok(())
 }

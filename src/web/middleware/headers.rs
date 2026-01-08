@@ -51,7 +51,7 @@ pub(crate) async fn apply_headers(
         HeaderValue::from_static(
             "default-src 'self'; \
         script-src 'self' 'wasm-unsafe-eval' 'report-sha256'; \
-        style-src 'self' 'unsafe-inline'; \
+        style-src 'self'; \
         img-src 'self' data:; \
         font-src 'self'; \
         connect-src 'self'; \

@@ -18,7 +18,7 @@ pub(crate) const AUTH_USER_ID: &str = "user_id";
 #[derive(Debug, Clone)]
 pub struct AuthenticatedUser {
     pub user_id: Uuid,
-    #[allow(dead_code)]
+    pub display_name: String,
     pub email: String,
     #[allow(dead_code)]
     pub groups: Vec<String>,
@@ -28,6 +28,7 @@ impl From<user::Model> for AuthenticatedUser {
     fn from(user: user::Model) -> Self {
         Self {
             user_id: user.id,
+            display_name: user.display_name.clone(),
             email: user.email.clone(),
             groups: user
                 .groups

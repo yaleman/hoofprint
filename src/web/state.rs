@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use crate::{db::entities::user, prelude::*, web::auth::AUTH_USER_ID};
+use crate::{
+    prelude::*,
+    web::auth::{AUTH_USER_ID, AuthenticatedUser},
+};
 
 /// Application state shared across all web handlers
 #[derive(Clone, Debug)]
@@ -36,7 +39,7 @@ impl AppState {
     pub(crate) async fn get_authenticated_user(
         &self,
         session: &tower_sessions::Session,
-    ) -> Result<crate::web::auth::AuthenticatedUser, HoofprintError> {
+    ) -> Result<AuthenticatedUser, HoofprintError> {
         if let Some(user_id_str) = session.get::<String>(AUTH_USER_ID).await? {
             let user_id = Uuid::parse_str(&user_id_str).map_err(|_| {
                 error!(user_id=?user_id_str, "Invalid user ID in session");

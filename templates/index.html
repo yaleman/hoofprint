@@ -33,3 +33,9 @@
     {% endif %}
 </div>
 {% endblock content %}
+
+{% block footer %}
+<div class="footer">
+    Logged in as {{ user_name }} ({{ user_email }})
+</div>
+{% endblock footer %}

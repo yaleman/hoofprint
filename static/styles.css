@@ -410,3 +410,12 @@ a.code_preview_box {
 #capture-canvas {
 	display: none;
 }
+
+.footer {
+	background-color: var(--bgcolor-white);
+	padding: 1rem;
+	text-align: center;
+	margin-top: 2rem;
+	border-radius: var(--border-radius);
+	color: var(--text-muted);
+}

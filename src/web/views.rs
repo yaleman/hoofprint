@@ -28,6 +28,8 @@ use crate::{
 #[template(path = "index.html")]
 pub(crate) struct HomePage {
     codes: Vec<CodeListItem>,
+    user_name: String,
+    user_email: String,
 }
 
 struct CodeListItem {
@@ -70,7 +72,11 @@ pub(crate) async fn homepage(
         })
         .collect();
 
-    Ok(HomePage { codes })
+    Ok(HomePage {
+        codes,
+        user_name: auth.display_name,
+        user_email: auth.email,
+    })
 }
 
 #[derive(Template, WebTemplate)]

@@ -27,3 +27,11 @@ pub(crate) async fn ensure_admin(
 
     next.run(request).await
 }
+
+#[tokio::test]
+async fn test_admin_unauth() {
+    let (server, _db) = crate::tests::setup_test_server().await;
+
+    let response = server.get(Urls::AdminDashboard.as_ref()).await;
+    assert_eq!(response.status_code(), axum::http::StatusCode::FORBIDDEN);
+}

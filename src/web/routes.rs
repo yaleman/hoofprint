@@ -69,11 +69,3 @@ async fn test_get_router() {
     dbg!(&router);
     let _test = router.without_v07_checks();
 }
-
-#[tokio::test]
-async fn test_admin_unauth() {
-    let (server, _db) = crate::tests::setup_test_server().await;
-
-    let response = server.get(Urls::AdminDashboard.as_ref()).await;
-    assert_eq!(response.status_code(), axum::http::StatusCode::FORBIDDEN);
-}

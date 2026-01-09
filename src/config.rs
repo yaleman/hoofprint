@@ -22,7 +22,7 @@ impl Configuration {
     pub(crate) fn test() -> Self {
         Self {
             database_file: ":memory:".to_string(),
-            host: "localhost".to_string(),
+            host: "127.0.0.1".to_string(),
             port: 0,
             frontend_hostname: "localhost".to_string(),
             tls_certificate: None,
@@ -42,4 +42,26 @@ impl From<&CliOpts> for Configuration {
             tls_key: opts.tls_key.clone(),
         }
     }
+}
+
+#[test]
+fn test_configuration_from_cli_opts() {
+    let cli_opts = CliOpts {
+        database_file: "test.db".to_string(),
+        host: "localhost".to_string(),
+        debug: true,
+        port: 12345.try_into().expect("Failed to create port"),
+        frontend_hostname: "https://localhost:12345".to_string(),
+        reset_admin_password: false,
+        tls_certificate: None,
+        tls_key: None,
+    };
+    let config = Configuration::from(&cli_opts);
+    assert_eq!(config.database_file, "test.db");
+    assert_eq!(config.host, "localhost");
+    assert_eq!(config.port, 12345);
+    assert_eq!(config.frontend_hostname, "https://localhost:12345");
+    assert!(config.tls_certificate.is_none());
+
+    assert!(config.tls_key.is_none());
 }

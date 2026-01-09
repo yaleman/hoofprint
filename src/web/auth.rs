@@ -1,10 +1,12 @@
 //! Authentication module for hoofprint
 
+use std::collections::HashMap;
+
 use crate::{constants::Urls, db::entities::user, password::verify_password, prelude::*};
 
 use axum::{
     Form,
-    // extract::FromRequestParts,
+    extract::Query,
     http::{StatusCode, header::LOCATION},
 };
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
@@ -16,9 +18,8 @@ pub(crate) const AUTH_USER_ID: &str = "user_id";
 #[derive(Debug, Clone)]
 pub struct AuthenticatedUser {
     pub user_id: Uuid,
-    #[allow(dead_code)]
+    pub display_name: String,
     pub email: String,
-    #[allow(dead_code)]
     pub groups: Vec<String>,
 }
 
@@ -26,6 +27,7 @@ impl From<user::Model> for AuthenticatedUser {
     fn from(user: user::Model) -> Self {
         Self {
             user_id: user.id,
+            display_name: user.display_name.clone(),
             email: user.email.clone(),
             groups: user
                 .groups
@@ -42,25 +44,30 @@ impl From<user::Model> for AuthenticatedUser {
 #[template(path = "login_form.html")]
 pub(crate) struct LoginPage {
     pub email: String,
+    pub success: Option<String>,
     pub error: Option<String>,
 }
 
 #[instrument(level = "debug", skip_all)]
-pub(crate) async fn get_login() -> Result<LoginPage, HoofprintError> {
+pub(crate) async fn get_login(
+    Query(query): Query<HashMap<String, String>>,
+) -> Result<LoginPage, HoofprintError> {
     let login_page = LoginPage {
-        email: "".to_string(),
-        error: None,
+        email: query.get("email").cloned().unwrap_or_default(),
+        error: query.get("error").cloned(),
+        success: query.get("success").cloned(),
     };
 
     Ok(login_page)
 }
 
-#[derive(Deserialize, Template, WebTemplate)]
+#[derive(Serialize, Deserialize, Template, WebTemplate)]
 #[template(path = "login_form.html")]
 pub(crate) struct LoginForm {
-    email: String,
-    password: String,
-    error: Option<String>,
+    pub(crate) email: String,
+    pub(crate) password: String,
+    pub(crate) error: Option<String>,
+    pub(crate) success: Option<String>,
 }
 
 #[instrument(level="debug", skip(form, app_state, session), fields(email = %form.email))]
@@ -74,6 +81,7 @@ pub(crate) async fn post_login(
             email: form.email,
             password: "".to_string(),
             error: Some("Email or password cannot be empty.".to_string()),
+            success: None,
         };
         return Ok(login_page.into_response());
     }
@@ -90,6 +98,7 @@ pub(crate) async fn post_login(
                 email: form.email,
                 password: "".to_string(),
                 error: Some("Invalid email or password.".to_string()),
+                success: None,
             };
             return Ok(login_page.into_response());
         }
@@ -103,6 +112,7 @@ pub(crate) async fn post_login(
                         email: form.email,
                         password: "".to_string(),
                         error: Some("Invalid email or password.".to_string()),
+                        success: None,
                     };
                     return Ok(login_page.into_response());
                 }

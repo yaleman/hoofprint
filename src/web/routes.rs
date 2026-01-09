@@ -1,11 +1,28 @@
 use crate::prelude::*;
+
+use axum::middleware::from_fn_with_state;
 use axum::routing::{get, post};
 
 use super::state::AppState;
 use super::views;
 
 /// Creates the application router with all routes
-pub fn routes() -> Router<AppState> {
+pub fn routes(state: &AppState) -> Router<AppState> {
+    // TODO: add authentication layer/middleware
+    let requires_admin = Router::new()
+        .route(
+            Urls::AdminDashboard.as_ref(),
+            get(super::admin::dashboard_get),
+        )
+        .route(
+            Urls::AdminPasswordReset.as_ref(),
+            get(super::admin::password_reset_get).post(super::admin::password_reset_post),
+        )
+        .layer(from_fn_with_state(
+            state.clone(),
+            super::middleware::admin::ensure_admin,
+        ));
+
     let requires_auth = Router::new()
         .route(Urls::Home.as_ref(), get(views::homepage))
         .route("/view/{code}", get(views::view_code))
@@ -28,8 +45,34 @@ pub fn routes() -> Router<AppState> {
             post(super::auth::logout).get(super::auth::logout),
         );
 
-    Router::new().merge(requires_auth).route(
-        Urls::Login.as_ref(),
-        get(super::auth::get_login).post(super::auth::post_login),
-    )
+    Router::new()
+        .merge(requires_admin)
+        .merge(requires_auth)
+        .route(
+            Urls::Register.as_ref(),
+            get(super::registration::get_register).post(super::registration::post_register),
+        )
+        .route(
+            Urls::Login.as_ref(),
+            get(super::auth::get_login).post(super::auth::post_login),
+        )
+        .route(
+            Urls::CspReportOnly.as_ref(),
+            post(super::views::csp_report_only),
+        )
+}
+
+#[tokio::test]
+async fn test_get_router() {
+    let router = routes(&AppState::test().await);
+    dbg!(&router);
+    let _test = router.without_v07_checks();
+}
+
+#[tokio::test]
+async fn test_admin_unauth() {
+    let (server, _db) = crate::tests::setup_test_server().await;
+
+    let response = server.get(Urls::AdminDashboard.as_ref()).await;
+    assert_eq!(response.status_code(), axum::http::StatusCode::FORBIDDEN);
 }

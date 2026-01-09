@@ -33,3 +33,13 @@
     {% endif %}
 </div>
 {% endblock content %}
+
+{% block footer %}
+<div class="footer">
+    <p>Logged in as {{ user_name }} ({{ user_email }})
+        {% if user_groups.contains(&String::from(crate::constants::GROUP_ADMIN)) %}
+        | <a href="{{ Urls::AdminDashboard.as_ref() }}">Admin Dashboard</a>
+        {% endif %}
+    </p>
+</div>
+{% endblock footer %}

@@ -1,19 +1,23 @@
+use std::str::FromStr;
+
 use axum::{
     extract::{Request, State},
     http::{
-        HeaderValue,
+        HeaderName, HeaderValue,
         header::{
             // ACCESS_CONTROL_ALLOW_HEADERS,
+            ACCESS_CONTROL_ALLOW_HEADERS,
             ACCESS_CONTROL_ALLOW_METHODS,
             ACCESS_CONTROL_ALLOW_ORIGIN,
             CACHE_CONTROL,
+            CONTENT_SECURITY_POLICY,
         },
     },
     middleware::Next,
     response::Response,
 };
 
-use crate::{prelude::Urls, web::AppState};
+use crate::prelude::*;
 
 // Middleware to add cache headers to static assets and manifest
 pub(crate) async fn apply_headers(
@@ -29,25 +33,50 @@ pub(crate) async fn apply_headers(
 
     let mut response = next.run(request).await;
 
+    let headers = response.headers_mut();
     if needs_cache {
-        response.headers_mut().insert(
+        headers.insert(
             CACHE_CONTROL,
             HeaderValue::from_static("public, max-age=3600"),
         );
     }
-
-    // Allow cross-origin access to static assets (e.g., .wasm) when embedded or fetched.
-    // This is safe for static files and avoids fetch() CORS errors for WASM loaders.
-    let headers = response.headers_mut();
-    // Allow any origin to fetch static assets (no credentials involved).
-    if let Ok(header) = HeaderValue::from_str(&server_uri) {
-        headers.insert(ACCESS_CONTROL_ALLOW_ORIGIN, header);
-    }
     headers.insert(
-        ACCESS_CONTROL_ALLOW_METHODS,
-        HeaderValue::from_static("GET, HEAD, OPTIONS"),
+        ACCESS_CONTROL_ALLOW_HEADERS,
+        HeaderValue::from_static("Access-Control-Allow-Headers: Content-Type"),
     );
-    // headers.insert(ACCESS_CONTROL_ALLOW_HEADERS, HeaderValue::from_static("*"));
+
+    // TODO: remove the style-src 'unsafe-inline' once <https://github.com/lindell/JsBarcode/pull/474> is merged and released
+    headers.insert(
+        CONTENT_SECURITY_POLICY,
+        HeaderValue::from_static(
+            "default-src 'self'; \
+        script-src 'self' 'wasm-unsafe-eval' 'report-sha256'; \
+        style-src 'self'; \
+        img-src 'self' data:; \
+        font-src 'self'; \
+        connect-src 'self'; \
+        frame-ancestors 'none'; \
+        base-uri 'self'; \
+        form-action 'self'; \
+        report-uri /csp/reportOnly;",
+        ),
+    );
+
+    // Report target for CSP violations
+    #[allow(clippy::expect_used)]
+    headers.insert(HeaderName::from_str("Report-To").expect("Invalid header name in code"), HeaderValue::from_static(r#"{"group":"default","max_age":31536000,"endpoints":[{"url":"/csp/reportOnly"}],"include_subdomains":true}"#));
+
+    // For static assets, set CORS headers to allow access from our configured origin
+    // This ensures WASM files and other static assets can be loaded correctly
+    if is_static {
+        if let Ok(header) = HeaderValue::from_str(&server_uri) {
+            headers.insert(ACCESS_CONTROL_ALLOW_ORIGIN, header);
+        }
+        headers.insert(
+            ACCESS_CONTROL_ALLOW_METHODS,
+            HeaderValue::from_static("GET, HEAD, OPTIONS"),
+        );
+    }
 
     response
 }

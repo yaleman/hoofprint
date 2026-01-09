@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::SystemTimeError};
 
 use axum::{
     body::Body,
@@ -19,6 +19,8 @@ pub enum HoofprintError {
     NotFound(String),
     ValidationError(Vec<String>),
     Authentication,
+    MissingCsrfToken,
+    InvalidCsrfToken,
     Unauthorized,
     InvalidCodeType(String),
     InvalidSite,
@@ -45,6 +47,8 @@ impl std::fmt::Display for HoofprintError {
             HoofprintError::InvalidBaseUrl(url) => write!(f, "Invalid Base URL: {}", url),
             HoofprintError::InternalError(msg) => write!(f, "Internal Error: {}", msg),
             HoofprintError::NeedToLogin => write!(f, "Need to Login"),
+            HoofprintError::MissingCsrfToken => write!(f, "Missing CSRF Token"),
+            HoofprintError::InvalidCsrfToken => write!(f, "Invalid CSRF Token"),
         }
     }
 }
@@ -75,6 +79,13 @@ impl From<tower_sessions::session_store::Error> for HoofprintError {
     fn from(err: tower_sessions::session_store::Error) -> Self {
         error!("Session store error: {}", err);
         HoofprintError::InternalError("Session Store Error, check the logs!".to_string())
+    }
+}
+
+impl From<SystemTimeError> for HoofprintError {
+    fn from(err: SystemTimeError) -> Self {
+        error!("System time error: {}", err);
+        HoofprintError::InternalError("System Time Error, check the logs!".to_string())
     }
 }
 
@@ -187,6 +198,14 @@ impl IntoResponse for HoofprintError {
                     [(LOCATION, HeaderValue::from_static("/login"))],
                 )
                     .into_response()
+            }
+            HoofprintError::MissingCsrfToken => {
+                let body = "Missing CSRF Token";
+                (StatusCode::BAD_REQUEST, body).into_response()
+            }
+            HoofprintError::InvalidCsrfToken => {
+                let body = "Invalid CSRF Token";
+                (StatusCode::BAD_REQUEST, body).into_response()
             }
         }
     }

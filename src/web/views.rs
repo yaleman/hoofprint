@@ -1,10 +1,12 @@
+use crate::prelude::*;
+
 use std::time::SystemTime;
 
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::{
+    body::Bytes,
     extract::{Form, Path, State},
-    response::Redirect,
 };
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, QueryFilter, prelude::DateTimeUtc,
@@ -27,6 +29,9 @@ use crate::{
 #[template(path = "index.html")]
 pub(crate) struct HomePage {
     codes: Vec<CodeListItem>,
+    user_name: String,
+    user_email: String,
+    user_groups: Vec<String>,
 }
 
 struct CodeListItem {
@@ -62,16 +67,19 @@ pub(crate) async fn homepage(
 
             CodeListItem {
                 id: code_model.id,
-                // code_type: code_model.type_,
                 code_value: code_model.value,
                 code_name: code_model.name.clone(),
                 site_name,
-                // created_at: code_model.created_at.to_string(),
             }
         })
         .collect();
 
-    Ok(HomePage { codes })
+    Ok(HomePage {
+        codes,
+        user_name: auth.display_name,
+        user_email: auth.email,
+        user_groups: auth.groups,
+    })
 }
 
 #[derive(Template, WebTemplate)]
@@ -82,10 +90,6 @@ pub(crate) struct ViewCodePage {
     pub code_id: Uuid,
     pub code_value: String,
     pub code_name: Option<String>,
-    // pub site_name: String,
-    // pub created_at: String,
-    // pub last_updated: Option<String>,
-    // pub is_owner: bool,
 }
 
 #[instrument(level = "debug", skip(app_state, session))]
@@ -94,13 +98,14 @@ pub(crate) async fn view_code(
     Path(code_id_str): Path<String>,
     session: Session,
 ) -> Result<ViewCodePage, HoofprintError> {
-    let _auth = app_state.get_authenticated_user(&session).await?;
+    let auth = app_state.get_authenticated_user(&session).await?;
     // Parse code_id as UUID
     let code_id = Uuid::parse_str(&code_id_str)
         .map_err(|_| HoofprintError::NotFound(format!("Invalid code ID: {}", code_id_str)))?;
 
     // Fetch code from database with related site
     let code_with_site = code::Entity::find_by_id(code_id)
+        .filter(code::Column::UserId.eq(auth.user_id))
         .find_also_related(site::Entity)
         .one(&app_state.db)
         .await?
@@ -150,8 +155,10 @@ pub(crate) struct SiteOption {
 #[instrument(level = "debug")]
 pub(crate) async fn create_code_get(
     State(app_state): State<AppState>,
-    _session: Session,
+    session: Session,
 ) -> Result<CreateCodePage, HoofprintError> {
+    app_state.get_authenticated_user(&session).await?;
+
     // Fetch all sites for dropdown
     let sites_models = site::Entity::find().all(&app_state.db).await?;
 
@@ -243,6 +250,7 @@ pub(crate) async fn edit_code_get(
 
     // Fetch code from database
     let code_model = code::Entity::find_by_id(code_id)
+        .filter(code::Column::UserId.eq(auth.user_id))
         .one(&app_state.db)
         .await?
         .ok_or_else(|| HoofprintError::NotFound(format!("Code {}", code_id)))?;
@@ -303,6 +311,7 @@ pub(crate) async fn edit_code_post(
 
     // Fetch existing code from database
     let code_model = code::Entity::find_by_id(code_id)
+        .filter(code::Column::UserId.eq(auth.user_id))
         .one(&app_state.db)
         .await?
         .ok_or_else(|| HoofprintError::NotFound(format!("Code {}", code_id)))?;
@@ -355,6 +364,7 @@ pub(crate) async fn code_delete(
 
     // Fetch code from database
     let code_model = code::Entity::find_by_id(code_id)
+        .filter(code::Column::UserId.eq(auth.user_id))
         .one(&app_state.db)
         .await?
         .ok_or_else(|| HoofprintError::NotFound(format!("Code {}", code_id)))?;
@@ -450,4 +460,21 @@ pub(crate) async fn scan_post(
 
     // Redirect to view page
     Ok(Redirect::to(&format!("/view/{}", new_code_id)))
+}
+
+pub(crate) async fn csp_report_only(body: Bytes) -> Result<(), HoofprintError> {
+    // For now, just log that a report was received.
+    // In a real application, you would parse and store the report details.
+    let body_string = String::from_utf8_lossy(&body);
+    let body_json = serde_json::from_str::<serde_json::Value>(&body_string);
+    #[allow(clippy::expect_used)]
+    if let Ok(json) = body_json {
+        tracing::info!(
+            "CSP Report-Only violation reported:\n {}",
+            serde_json::to_string_pretty(&json).expect("Failed to pretty-print JSON")
+        );
+    } else {
+        tracing::info!("CSP Report-Only violation reported: {:?}", body_string);
+    }
+    Ok(())
 }

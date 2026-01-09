@@ -9,7 +9,7 @@
 <div>
     <h2>Scan Barcode or QR Code</h2>
 
-    <div id="error-container" class="error" style="display: none;"></div>
+    <div id="error-container" class="error hidden"></div>
 
     {% if let Some(error_string) = error %}
     <div class="error">
@@ -24,11 +24,11 @@
             <div class="scanning-overlay"></div>
         </div>
 
-        <canvas id="capture-canvas" style="display: none;"></canvas>
+        <canvas id="capture-canvas"></canvas>
 
         <div class="scanner-controls">
             <button id="start-scan" type="button" class="btn btn-blue">Start Scanning</button>
-            <button id="stop-scan" type="button" class="btn btn-red" style="display: none;">Stop Scanning</button>
+            <button id="stop-scan" type="button" class="btn btn-red hidden">Stop Scanning</button>
         </div>
 
         <div class="scanner-instructions">
@@ -38,7 +38,7 @@
     </div>
 
     <!-- Form Section (shown after scan) -->
-    <div id="form-section" style="display: none;">
+    <div id="form-section" class="hidden">
         <h3>Scanned Code</h3>
 
         <form method="post" action="/scan">

@@ -12,6 +12,7 @@ pub(crate) enum Urls {
     Register,
     AdminDashboard,
     AdminPasswordReset,
+    HealthCheck,
 }
 
 impl AsRef<str> for Urls {
@@ -28,6 +29,7 @@ impl AsRef<str> for Urls {
             Urls::Register => "/register",
             Urls::AdminDashboard => "/admin",
             Urls::AdminPasswordReset => "/admin/password-reset",
+            Urls::HealthCheck => "/health",
         }
     }
 }

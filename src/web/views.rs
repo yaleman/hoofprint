@@ -482,3 +482,11 @@ pub(crate) async fn csp_report_only(body: Bytes) -> Result<(), HoofprintError> {
 pub(crate) async fn health_check() -> Result<String, HoofprintError> {
     Ok("OK".to_string())
 }
+
+#[tokio::test]
+async fn test_healthcheck() {
+    let (server, _db) = crate::tests::setup_test_server().await;
+
+    let response = server.get(Urls::HealthCheck.as_ref()).await;
+    assert_eq!(response.status_code(), axum::http::StatusCode::OK);
+}

@@ -60,6 +60,7 @@ pub fn routes(state: &AppState) -> Router<AppState> {
             Urls::CspReportOnly.as_ref(),
             post(super::views::csp_report_only),
         )
+        .route(Urls::HealthCheck.as_ref(), get(super::views::health_check))
 }
 
 #[tokio::test]

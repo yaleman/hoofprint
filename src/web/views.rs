@@ -478,3 +478,7 @@ pub(crate) async fn csp_report_only(body: Bytes) -> Result<(), HoofprintError> {
     }
     Ok(())
 }
+
+pub(crate) async fn health_check() -> Result<String, HoofprintError> {
+    Ok("OK".to_string())
+}

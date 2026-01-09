@@ -17,7 +17,7 @@ use axum::{
     response::Response,
 };
 
-use crate::{prelude::Urls, web::AppState};
+use crate::prelude::*;
 
 // Middleware to add cache headers to static assets and manifest
 pub(crate) async fn apply_headers(

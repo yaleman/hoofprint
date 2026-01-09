@@ -35,7 +35,7 @@ pub async fn server_inner(
         .deflate(true)
         .quality(tower_http::CompressionLevel::Best);
 
-    let router = routes::routes()
+    let router = routes::routes(&app_state)
         .with_state(app_state.clone())
         .layer(session_layer)
         .nest_service(

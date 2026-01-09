@@ -1,11 +1,13 @@
 use crate::prelude::*;
+
+use axum::middleware::from_fn_with_state;
 use axum::routing::{get, post};
 
 use super::state::AppState;
 use super::views;
 
 /// Creates the application router with all routes
-pub fn routes() -> Router<AppState> {
+pub fn routes(state: &AppState) -> Router<AppState> {
     // TODO: add authentication layer/middleware
     let requires_admin = Router::new()
         .route(
@@ -15,7 +17,11 @@ pub fn routes() -> Router<AppState> {
         .route(
             Urls::AdminPasswordReset.as_ref(),
             get(super::admin::password_reset_get).post(super::admin::password_reset_post),
-        );
+        )
+        .layer(from_fn_with_state(
+            state.clone(),
+            super::middleware::admin::ensure_admin,
+        ));
 
     let requires_auth = Router::new()
         .route(Urls::Home.as_ref(), get(views::homepage))
@@ -56,9 +62,17 @@ pub fn routes() -> Router<AppState> {
         )
 }
 
-#[test]
-fn test_get_router() {
-    let router = routes();
+#[tokio::test]
+async fn test_get_router() {
+    let router = routes(&AppState::test().await);
     dbg!(&router);
     let _test = router.without_v07_checks();
+}
+
+#[tokio::test]
+async fn test_admin_unauth() {
+    let (server, _db) = crate::tests::setup_test_server().await;
+
+    let response = server.get(Urls::AdminDashboard.as_ref()).await;
+    assert_eq!(response.status_code(), axum::http::StatusCode::FORBIDDEN);
 }

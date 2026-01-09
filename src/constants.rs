@@ -33,3 +33,5 @@ impl AsRef<str> for Urls {
 }
 
 pub const PASSWORD_DEFAULT_LENGTH: usize = 16;
+
+pub const GROUP_ADMIN: &str = "admin";

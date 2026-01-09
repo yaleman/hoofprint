@@ -50,8 +50,6 @@ pub(crate) async fn password_reset_get(
     app_state: State<AppState>,
     session: Session,
 ) -> Result<PasswordResetConfirm, HoofprintError> {
-    let _auth_user = app_state.get_authenticated_user(&session).await?;
-
     // get the user to ensure they exist
     let target_user = user::Entity::find_by_id(query.user_id)
         .one(&app_state.db)

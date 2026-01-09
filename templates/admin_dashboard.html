@@ -1,0 +1,33 @@
+{% extends "base_template.html" %}
+{% block title %}HoofPrint - Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<h1>Admin Dashboard</h1>
+
+<table>
+    <thead>
+        <th>Email</th>
+        <th>Display Name</th>
+        <th>Actions</th>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.email }}</td>
+            <td>{{ user.display_name }}</td>
+            <td>
+                <a href="{{ Urls::AdminPasswordReset.as_ref() }}?user_id={{ user.id }}">Reset Password</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock content %}
+
+{% block footer %}
+<div class="footer">
+    Logged in as {{ user_display_name }} ({{ user_email }})
+</div>
+{% endblock footer %}

@@ -6,6 +6,17 @@ use super::views;
 
 /// Creates the application router with all routes
 pub fn routes() -> Router<AppState> {
+    // TODO: add authentication layer/middleware
+    let requires_admin = Router::new()
+        .route(
+            Urls::AdminDashboard.as_ref(),
+            get(super::admin::dashboard_get),
+        )
+        .route(
+            Urls::AdminPasswordReset.as_ref(),
+            get(super::admin::password_reset_get).post(super::admin::password_reset_post),
+        );
+
     let requires_auth = Router::new()
         .route(Urls::Home.as_ref(), get(views::homepage))
         .route("/view/{code}", get(views::view_code))
@@ -29,6 +40,7 @@ pub fn routes() -> Router<AppState> {
         );
 
     Router::new()
+        .merge(requires_admin)
         .merge(requires_auth)
         .route(
             Urls::Register.as_ref(),

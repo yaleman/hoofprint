@@ -1,5 +1,5 @@
 use argon2::{Argon2, PasswordHasher, PasswordVerifier, password_hash::Salt};
-use tracing::error;
+use tracing::{debug, error};
 
 use crate::error::HoofprintError;
 
@@ -28,7 +28,10 @@ pub(crate) fn verify_password(input_password: &str, db_hashed: &str) -> Result<(
     let parsed_hash = argon2::PasswordHash::new(db_hashed)?;
     Argon2::default()
         .verify_password(input_password.as_bytes(), &parsed_hash)
-        .map_err(|_| HoofprintError::Authentication)
+        .map_err(|err| {
+            debug!(error=%err, "Failed to verify password");
+            HoofprintError::Authentication
+        })
 }
 
 #[test]

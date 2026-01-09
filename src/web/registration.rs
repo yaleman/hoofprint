@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use axum::{Form, extract::Query, response::Redirect};
+use axum::{Form, extract::Query};
 use secret_string::SecretString;
 
 use crate::{db::entities::user, prelude::*};

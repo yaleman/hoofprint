@@ -10,6 +10,8 @@ pub(crate) enum Urls {
     Static,
     CspReportOnly,
     Register,
+    AdminDashboard,
+    AdminPasswordReset,
 }
 
 impl AsRef<str> for Urls {
@@ -24,6 +26,10 @@ impl AsRef<str> for Urls {
             Urls::Static => "/static/",
             Urls::CspReportOnly => "/csp/reportOnly",
             Urls::Register => "/register",
+            Urls::AdminDashboard => "/admin",
+            Urls::AdminPasswordReset => "/admin/password-reset",
         }
     }
 }
+
+pub const PASSWORD_DEFAULT_LENGTH: usize = 16;

@@ -3,7 +3,7 @@ pub(crate) mod migrations;
 
 use std::str::FromStr;
 
-use crate::{get_random_password, prelude::*};
+use crate::{constants::PASSWORD_DEFAULT_LENGTH, get_random_password, prelude::*};
 use migrations::Migrator;
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ConnectOptions, Database, DatabaseConnection, EntityTrait,
@@ -35,7 +35,7 @@ pub async fn connect(config: SendableConfig) -> Result<DatabaseConnection, Hoofp
         .is_none()
     {
         info!("Creating default admin user");
-        let password = get_random_password(16);
+        let password = get_random_password(PASSWORD_DEFAULT_LENGTH);
         let admin_user = entities::user::ActiveModel {
             id: Set(Uuid::nil()),
             email: Set("admin".to_string()),

@@ -1,3 +1,5 @@
+use crate::prelude::*;
+
 use std::time::SystemTime;
 
 use askama::Template;
@@ -5,7 +7,6 @@ use askama_web::WebTemplate;
 use axum::{
     body::Bytes,
     extract::{Form, Path, State},
-    response::Redirect,
 };
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, QueryFilter, prelude::DateTimeUtc,
@@ -30,6 +31,7 @@ pub(crate) struct HomePage {
     codes: Vec<CodeListItem>,
     user_name: String,
     user_email: String,
+    user_groups: Vec<String>,
 }
 
 struct CodeListItem {
@@ -76,6 +78,7 @@ pub(crate) async fn homepage(
         codes,
         user_name: auth.display_name,
         user_email: auth.email,
+        user_groups: auth.groups,
     })
 }
 

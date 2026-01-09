@@ -36,6 +36,8 @@
 
 {% block footer %}
 <div class="footer">
-    Logged in as {{ user_name }} ({{ user_email }})
+    <p>Logged in as {{ user_name }} ({{ user_email }})
+        {% if user_groups.contains(&String::from("admin")) %} | <a href="{{ Urls::AdminDashboard.as_ref() }}">Admin Dashboard</a> {% endif %}
+    </p>
 </div>
 {% endblock footer %}

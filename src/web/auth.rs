@@ -20,7 +20,6 @@ pub struct AuthenticatedUser {
     pub user_id: Uuid,
     pub display_name: String,
     pub email: String,
-    #[allow(dead_code)]
     pub groups: Vec<String>,
 }
 

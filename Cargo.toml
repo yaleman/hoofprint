@@ -48,7 +48,7 @@ tower-http = { version = "0.6.8", features = [
 tower-sessions = { version = "0.14.0" }
 tower-sessions-sqlx-store = { version = "0.15.0", features = ["sqlite"] }
 tracing = { version = "0.1.44", features = ["log", "release_max_level_debug"] }
-url = "2.5.7"
+url = "2.5.8"
 uuid = { version = "1.19.0", features = ["v7"] }
 
 [dev-dependencies]

@@ -16,7 +16,7 @@ axum-server = { version = "0.8.0", features = [
     "tls-rustls",
 ] }
 base64 = "0.22.1"
-clap = { version = "4.5.54", features = ["derive", "env"] }
+clap = { version = "4.5.56", features = ["derive", "env"] }
 fern = "0.7.1"
 humantime = "2.3.0"
 log = "0.4.29"

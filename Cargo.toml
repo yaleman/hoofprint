@@ -45,7 +45,7 @@ tower-http = { version = "0.6.8", features = [
     "compression-gzip",
     "compression-deflate",
 ] }
-tower-sessions = { version = "0.14.0" }
+tower-sessions = { version = "0.15.0" }
 tower-sessions-sqlx-store = { version = "0.15.0", features = ["sqlite"] }
 tracing = { version = "0.1.44", features = ["log", "release_max_level_debug"] }
 url = { version = "2.5.8", features = ["serde"] }

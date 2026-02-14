@@ -89,8 +89,8 @@ impl TryFrom<&entities::code::Model> for Code {
 
 /// generate a random password
 pub(crate) fn get_random_password(length: usize) -> String {
-    use rand::Rng;
     use rand::distr::Alphanumeric;
+    use rand::RngExt;
 
     rand::rng()
         .sample_iter(Alphanumeric)

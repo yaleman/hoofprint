@@ -22,7 +22,7 @@ humantime = "2.3.0"
 log = "0.4.29"
 rand = "0.10.0"
 rustls = { version = "0.23.37", features = ["aws-lc-rs", "zlib"] }
-sea-orm = { version = "1.1.19", features = [
+sea-orm = { version = "1.1.20", features = [
     "sqlx-sqlite",
     "runtime-tokio-rustls",
 ] }

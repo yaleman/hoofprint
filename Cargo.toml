@@ -35,7 +35,7 @@ sea-orm-migration = { version = "1.1.20", features = [
 ] }
 secret-string = { version = "0.0.2", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0.149"
+serde_json = "1.0.150"
 time = { version = "0.3", features = ["macros"] }
 tokio = { version = "1.52.3", features = ["full", "tracing"] }
 tower-http = { version = "0.6.10", features = [

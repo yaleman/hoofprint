@@ -4,8 +4,90 @@ use crate::{error::HoofprintError, get_random_password, password::hash_password}
 use sea_orm::ActiveValue;
 use sea_orm::{IntoActiveModel, entity::prelude::*};
 use serde::{Deserialize, Serialize};
-use tracing::info;
 use uuid::Uuid;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{config::Configuration, db::connect, prelude::*};
+
+    async fn setup_db() -> DatabaseConnection {
+        let config = Configuration::test();
+        connect(Arc::new(RwLock::new(config)))
+            .await
+            .expect("Failed to connect to test database")
+    }
+
+    #[tokio::test]
+    async fn test_reset_password_by_email() {
+        let db = setup_db().await;
+        let email = "user@example.com";
+
+        // Create a user
+        Model::create_new(db.clone(), email, "User Name", Some("old-password"))
+            .await
+            .expect("Failed to create user");
+
+        // Reset password
+        let new_password = reset_password_by_email(&db, email)
+            .await
+            .expect("Password reset failed");
+        assert_eq!(new_password.len(), 16);
+
+        // Verify the user now has the new hashed password
+        let user = Entity::find()
+            .filter(Column::Email.eq(email))
+            .one(&db)
+            .await
+            .expect("Failed to search for user")
+            .expect("User should exist");
+
+        assert_ne!(
+            user.password,
+            hash_password("old-password").expect("Failed to hash password")
+        );
+        assert_eq!(
+            user.password,
+            hash_password(&new_password).expect("Failed to hash password")
+        );
+    }
+
+    #[tokio::test]
+    async fn test_reset_password_by_email_not_found() {
+        let db = setup_db().await;
+        let result = reset_password_by_email(&db, "nonexistent@example.com").await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_reset_password_by_id() {
+        let db = setup_db().await;
+        let user = Model::create_new(
+            db.clone(),
+            "user@example.com",
+            "User Name",
+            Some("old-password"),
+        )
+        .await
+        .expect("Failed to save user");
+
+        let new_password = reset_password_by_id(&db, user.id)
+            .await
+            .expect("Password reset failed");
+        assert_eq!(new_password.len(), 16);
+
+        let updated_user = Entity::find_by_id(user.id)
+            .one(&db)
+            .await
+            .expect("Failed to find user")
+            .expect("User should exist");
+
+        assert_eq!(
+            updated_user.password,
+            hash_password(&new_password).expect("Failed to hash password")
+        );
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "user")]
@@ -58,18 +140,41 @@ impl ActiveModelBehavior for ActiveModel {}
 
 /// Reset the admin user's password and return the new password
 pub(crate) async fn reset_admin_password(db: DatabaseConnection) -> Result<String, HoofprintError> {
+    let admin_id = Uuid::nil();
+    reset_password_by_id(&db, admin_id).await
+}
+
+/// Reset a user's password by their email and return the new password
+pub(crate) async fn reset_password_by_email(
+    db: &DatabaseConnection,
+    email: &str,
+) -> Result<String, HoofprintError> {
+    let user = Entity::find()
+        .filter(Column::Email.eq(email))
+        .one(db)
+        .await?
+        .ok_or_else(|| {
+            HoofprintError::InternalError(format!("User with email {} not found", email))
+        })?;
+
+    reset_password_by_id(db, user.id).await
+}
+
+/// Helper to reset password for a given UUID
+pub(crate) async fn reset_password_by_id(
+    db: &DatabaseConnection,
+    id: Uuid,
+) -> Result<String, HoofprintError> {
     let new_password = get_random_password(16);
 
-    info!("Resetting admin user credentials");
-    let mut admin = Entity::find_by_id(Uuid::nil().hyphenated())
-        .one(&db)
+    let mut user = Entity::find_by_id(id)
+        .one(db)
         .await?
-        .ok_or_else(|| HoofprintError::InternalError("Admin user not found in DB".to_string()))?
+        .ok_or_else(|| HoofprintError::InternalError("User not found in DB".to_string()))?
         .into_active_model();
 
-    admin
-        .password
-        .set_if_not_equals(hash_password(&new_password)?);
-    admin.save(&db).await?;
+    user.password = ActiveValue::Set(hash_password(&new_password)?);
+    user.save(db).await?;
+
     Ok(new_password)
 }

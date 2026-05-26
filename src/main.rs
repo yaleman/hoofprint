@@ -33,8 +33,17 @@ async fn main() -> Result<ExitCode, ExitCode> {
 
     debug!("Connected to database successfully");
 
-    if cli_opts.reset_admin_password {
-        return handle_admin_reset(db.clone()).await;
+    debug!("Connected to database successfully");
+
+    if let Some(command) = cli_opts.command {
+        return match command {
+            hoofprint::cli::Command::ResetAdminPassword => {
+                handle_admin_reset(db.clone()).await
+            }
+            hoofprint::cli::Command::ResetPassword { username } => {
+                hoofprint::cli::handle_user_reset(db.clone(), username).await
+            }
+        };
     }
 
     let app_state = hoofprint::web::AppState::new(db, config).await;

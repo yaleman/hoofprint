@@ -52,7 +52,7 @@ fn test_configuration_from_cli_opts() {
         debug: true,
         port: 12345.try_into().expect("Failed to create port"),
         frontend_hostname: "https://localhost:12345".to_string(),
-        reset_admin_password: false,
+        command: None,
         tls_certificate: None,
         tls_key: None,
     };

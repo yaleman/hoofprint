@@ -1,8 +1,11 @@
-use crate::{db::entities::user::reset_admin_password, prelude::*};
+use crate::{
+    db::entities::user::{reset_admin_password, reset_password_by_email, search_users},
+    prelude::*,
+};
 
 use std::{num::NonZeroU16, path::PathBuf, process::ExitCode};
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use sea_orm::DatabaseConnection;
 
 #[derive(Parser, Debug)]
@@ -22,12 +25,8 @@ pub struct CliOpts {
     #[clap(long, env = "HOOFPRINT_FRONTEND_HOSTNAME", default_value = "localhost")]
     pub frontend_hostname: String,
 
-    #[clap(
-        long,
-        help = "Reset the admin user's password to a random value",
-        action
-    )]
-    pub reset_admin_password: bool,
+    #[clap(subcommand)]
+    pub command: Option<Command>,
 
     #[clap(env = "HOOFPRINT_TLS_CERTIFICATE")]
     pub tls_certificate: Option<PathBuf>,
@@ -36,14 +35,65 @@ pub struct CliOpts {
     pub tls_key: Option<PathBuf>,
 }
 
+#[derive(Subcommand, Debug)]
+pub enum Command {
+    /// Reset the admin user's password to a random value
+    ResetAdminPassword,
+    /// Reset a specific user's password by their email/username
+    ResetPassword {
+        /// The email address of the user
+        username: String,
+    },
+    /// Search for users by display name or email
+    SearchUser {
+        /// Search query (email or display name)
+        query: String,
+    },
+}
+
 pub async fn handle_admin_reset(db: DatabaseConnection) -> Result<ExitCode, ExitCode> {
     let new_password = reset_admin_password(db).await.map_err(|err| {
         error!("Failed to reset admin user: {}", err);
         ExitCode::FAILURE
     })?;
 
-    println!("Admin user has been reset.");
-    println!("New password: {}", new_password);
+    eprintln!("Admin user has been reset.");
+    eprintln!("New password: {}", new_password);
 
+    Ok(ExitCode::SUCCESS)
+}
+
+pub async fn handle_user_reset(
+    db: DatabaseConnection,
+    username: String,
+) -> Result<ExitCode, ExitCode> {
+    let new_password = reset_password_by_email(&db, &username)
+        .await
+        .map_err(|err| {
+            error!("Failed to reset password for user {}: {}", username, err);
+            ExitCode::FAILURE
+        })?;
+
+    eprintln!("User {} has been reset.", username);
+    eprintln!("New password: {}", new_password);
+
+    Ok(ExitCode::SUCCESS)
+}
+
+pub async fn handle_user_search(
+    db: DatabaseConnection,
+    query: String,
+) -> Result<ExitCode, ExitCode> {
+    let users = search_users(&db, &query).await.map_err(|err| {
+        error!("Failed to search users with query {}: {}", query, err);
+        ExitCode::FAILURE
+    })?;
+    if users.is_empty() {
+        eprintln!("No users found matching query: {}", query);
+        return Ok(ExitCode::SUCCESS);
+    }
+    for user in users {
+        eprintln!("{} - {}", user.display_name, user.email);
+    }
     Ok(ExitCode::SUCCESS)
 }

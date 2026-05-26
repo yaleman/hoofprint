@@ -1,10 +1,116 @@
 //! User entity for hoofprint
 
 use crate::{error::HoofprintError, get_random_password, password::hash_password};
-use sea_orm::ActiveValue;
+use sea_orm::{ActiveValue, Condition};
 use sea_orm::{IntoActiveModel, entity::prelude::*};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
+#[sea_orm(table_name = "user")]
+pub struct Model {
+    #[sea_orm(primary_key, auto_increment = false, default_value = "Uuid::new_v7()")]
+    pub id: Uuid,
+    pub display_name: String,
+    pub email: String,
+    pub groups: Json,
+    #[serde(skip_serializing)]
+    pub password: String,
+}
+
+impl Model {
+    pub(crate) async fn create_new(
+        db: DatabaseConnection,
+        email: &str,
+        display_name: &str,
+        password: Option<&str>,
+    ) -> Result<Model, HoofprintError> {
+        let mut user = ActiveModel {
+            id: ActiveValue::Set(Uuid::now_v7()),
+            email: ActiveValue::Set(email.to_string()),
+            display_name: ActiveValue::Set(display_name.to_string()),
+            groups: ActiveValue::Set(serde_json::json!([])),
+            password: ActiveValue::NotSet,
+        };
+        if let Some(password) = password {
+            user.password = ActiveValue::Set(hash_password(password)?);
+        };
+
+        let user = user.insert(&db).await?;
+        Ok(user)
+    }
+}
+
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {
+    #[sea_orm(has_many = "super::code::Entity")]
+    Code,
+}
+
+impl Related<super::code::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Code.def()
+    }
+}
+
+impl ActiveModelBehavior for ActiveModel {}
+
+pub(crate) async fn search_users(
+    db: &DatabaseConnection,
+    query: &str,
+) -> Result<Vec<Model>, HoofprintError> {
+    let pattern = format!("%{}%", query.replace(' ', "%"));
+    Entity::find()
+        .filter(
+            Condition::any()
+                .add(Column::Email.like(&pattern))
+                .add(Column::DisplayName.like(&pattern)),
+        )
+        .all(db)
+        .await
+        .map_err(|e| HoofprintError::InternalError(e.to_string()))
+}
+
+/// Reset the admin user's password and return the new password
+pub(crate) async fn reset_admin_password(db: DatabaseConnection) -> Result<String, HoofprintError> {
+    let admin_id = Uuid::nil();
+    reset_password_by_id(&db, admin_id).await
+}
+
+/// Reset a user's password by their email and return the new password
+pub(crate) async fn reset_password_by_email(
+    db: &DatabaseConnection,
+    email: &str,
+) -> Result<String, HoofprintError> {
+    let user = Entity::find()
+        .filter(Column::Email.eq(email))
+        .one(db)
+        .await?
+        .ok_or_else(|| {
+            HoofprintError::InternalError(format!("User with email {} not found", email))
+        })?;
+
+    reset_password_by_id(db, user.id).await
+}
+
+/// Helper to reset password for a given UUID
+pub(crate) async fn reset_password_by_id(
+    db: &DatabaseConnection,
+    id: Uuid,
+) -> Result<String, HoofprintError> {
+    let new_password = get_random_password(16);
+
+    let mut user = Entity::find_by_id(id)
+        .one(db)
+        .await?
+        .ok_or_else(|| HoofprintError::InternalError("User not found in DB".to_string()))?
+        .into_active_model();
+
+    user.password = ActiveValue::Set(hash_password(&new_password)?);
+    user.save(db).await?;
+
+    Ok(new_password)
+}
 
 #[cfg(test)]
 mod tests {
@@ -87,94 +193,36 @@ mod tests {
             hash_password(&new_password).expect("Failed to hash password")
         );
     }
-}
 
-#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
-#[sea_orm(table_name = "user")]
-pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false, default_value = "Uuid::new_v7()")]
-    pub id: Uuid,
-    pub display_name: String,
-    pub email: String,
-    pub groups: Json,
-    #[serde(skip_serializing)]
-    pub password: String,
-}
+    #[tokio::test]
+    async fn test_search_users() {
+        let db = setup_db().await;
+        Model::create_new(db.clone(), "alice@example.com", "Alice Smith", None)
+            .await
+            .expect("Failed to create user");
+        Model::create_new(db.clone(), "bob@example.com", "Bob Jones", None)
+            .await
+            .expect("Failed to create user");
+        Model::create_new(db.clone(), "charlie@example.com", "Charlie Brown", None)
+            .await
+            .expect("Failed to create user");
 
-impl Model {
-    pub(crate) async fn create_new(
-        db: DatabaseConnection,
-        email: &str,
-        display_name: &str,
-        password: Option<&str>,
-    ) -> Result<Model, HoofprintError> {
-        let mut user = ActiveModel {
-            id: ActiveValue::Set(Uuid::now_v7()),
-            email: ActiveValue::Set(email.to_string()),
-            display_name: ActiveValue::Set(display_name.to_string()),
-            groups: ActiveValue::Set(serde_json::json!([])),
-            password: ActiveValue::NotSet,
-        };
-        if let Some(password) = password {
-            user.password = ActiveValue::Set(hash_password(password)?);
-        };
+        // Search by email fragment
+        let results = search_users(&db, "alice").await.expect("Search failed");
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].email, "alice@example.com");
 
-        let user = user.insert(&db).await?;
-        Ok(user)
+        // Search by display name fragment
+        let results = search_users(&db, "Brown").await.expect("Search failed");
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].display_name, "Charlie Brown");
+
+        // Search for something that matches multiple
+        let results = search_users(&db, "e").await.expect("Search failed"); // all have @example.com
+        assert_eq!(results.len(), 3);
+
+        // Search for nothing
+        let results = search_users(&db, "xyz123").await.expect("Search failed");
+        assert_eq!(results.len(), 0);
     }
-}
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(has_many = "super::code::Entity")]
-    Code,
-}
-
-impl Related<super::code::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Code.def()
-    }
-}
-
-impl ActiveModelBehavior for ActiveModel {}
-
-/// Reset the admin user's password and return the new password
-pub(crate) async fn reset_admin_password(db: DatabaseConnection) -> Result<String, HoofprintError> {
-    let admin_id = Uuid::nil();
-    reset_password_by_id(&db, admin_id).await
-}
-
-/// Reset a user's password by their email and return the new password
-pub(crate) async fn reset_password_by_email(
-    db: &DatabaseConnection,
-    email: &str,
-) -> Result<String, HoofprintError> {
-    let user = Entity::find()
-        .filter(Column::Email.eq(email))
-        .one(db)
-        .await?
-        .ok_or_else(|| {
-            HoofprintError::InternalError(format!("User with email {} not found", email))
-        })?;
-
-    reset_password_by_id(db, user.id).await
-}
-
-/// Helper to reset password for a given UUID
-pub(crate) async fn reset_password_by_id(
-    db: &DatabaseConnection,
-    id: Uuid,
-) -> Result<String, HoofprintError> {
-    let new_password = get_random_password(16);
-
-    let mut user = Entity::find_by_id(id)
-        .one(db)
-        .await?
-        .ok_or_else(|| HoofprintError::InternalError("User not found in DB".to_string()))?
-        .into_active_model();
-
-    user.password = ActiveValue::Set(hash_password(&new_password)?);
-    user.save(db).await?;
-
-    Ok(new_password)
 }

@@ -10,7 +10,11 @@
 #![deny(clippy::needless_pass_by_value)]
 #![deny(clippy::trivially_copy_pass_by_ref)]
 
-use hoofprint::{cli::handle_admin_reset, config::Configuration, prelude::*};
+use hoofprint::{
+    cli::{Command, handle_admin_reset},
+    config::Configuration,
+    prelude::*,
+};
 
 use std::{process::ExitCode, sync::Arc};
 
@@ -37,11 +41,12 @@ async fn main() -> Result<ExitCode, ExitCode> {
 
     if let Some(command) = cli_opts.command {
         return match command {
-            hoofprint::cli::Command::ResetAdminPassword => {
-                handle_admin_reset(db.clone()).await
-            }
-            hoofprint::cli::Command::ResetPassword { username } => {
+            Command::ResetAdminPassword => handle_admin_reset(db.clone()).await,
+            Command::ResetPassword { username } => {
                 hoofprint::cli::handle_user_reset(db.clone(), username).await
+            }
+            Command::SearchUser { query } => {
+                hoofprint::cli::handle_user_search(db.clone(), query).await
             }
         };
     }

@@ -1,4 +1,7 @@
-use crate::{db::entities::user::{reset_admin_password, reset_password_by_email}, prelude::*};
+use crate::{
+    db::entities::user::{reset_admin_password, reset_password_by_email, search_users},
+    prelude::*,
+};
 
 use std::{num::NonZeroU16, path::PathBuf, process::ExitCode};
 
@@ -41,6 +44,11 @@ pub enum Command {
         /// The email address of the user
         username: String,
     },
+    /// Search for users by display name or email
+    SearchUser {
+        /// Search query (email or display name)
+        query: String,
+    },
 }
 
 pub async fn handle_admin_reset(db: DatabaseConnection) -> Result<ExitCode, ExitCode> {
@@ -55,14 +63,37 @@ pub async fn handle_admin_reset(db: DatabaseConnection) -> Result<ExitCode, Exit
     Ok(ExitCode::SUCCESS)
 }
 
-pub async fn handle_user_reset(db: DatabaseConnection, username: String) -> Result<ExitCode, ExitCode> {
-    let new_password = reset_password_by_email(&db, &username).await.map_err(|err| {
-        error!("Failed to reset password for user {}: {}", username, err);
-        ExitCode::FAILURE
-    })?;
+pub async fn handle_user_reset(
+    db: DatabaseConnection,
+    username: String,
+) -> Result<ExitCode, ExitCode> {
+    let new_password = reset_password_by_email(&db, &username)
+        .await
+        .map_err(|err| {
+            error!("Failed to reset password for user {}: {}", username, err);
+            ExitCode::FAILURE
+        })?;
 
     eprintln!("User {} has been reset.", username);
     eprintln!("New password: {}", new_password);
 
+    Ok(ExitCode::SUCCESS)
+}
+
+pub async fn handle_user_search(
+    db: DatabaseConnection,
+    query: String,
+) -> Result<ExitCode, ExitCode> {
+    let users = search_users(&db, &query).await.map_err(|err| {
+        error!("Failed to search users with query {}: {}", query, err);
+        ExitCode::FAILURE
+    })?;
+    if users.is_empty() {
+        eprintln!("No users found matching query: {}", query);
+        return Ok(ExitCode::SUCCESS);
+    }
+    for user in users {
+        eprintln!("{} - {}", user.display_name, user.email);
+    }
     Ok(ExitCode::SUCCESS)
 }

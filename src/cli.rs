@@ -1,5 +1,5 @@
 use crate::{
-    db::entities::user::{reset_admin_password, reset_password_by_email, search_users},
+    db::entities::user::{list_users, reset_admin_password, reset_password_by_email, search_users},
     prelude::*,
 };
 
@@ -49,6 +49,8 @@ pub enum Command {
         /// Search query (email or display name)
         query: String,
     },
+    /// List all users sorted by email address
+    ListAllUsers,
 }
 
 pub async fn handle_admin_reset(db: DatabaseConnection) -> Result<ExitCode, ExitCode> {
@@ -90,6 +92,21 @@ pub async fn handle_user_search(
     })?;
     if users.is_empty() {
         eprintln!("No users found matching query: {}", query);
+        return Ok(ExitCode::SUCCESS);
+    }
+    for user in users {
+        eprintln!("{} - {}", user.display_name, user.email);
+    }
+    Ok(ExitCode::SUCCESS)
+}
+
+pub async fn handle_list_users(db: DatabaseConnection) -> Result<ExitCode, ExitCode> {
+    let users = list_users(&db).await.map_err(|err| {
+        error!("Failed to list users: {}", err);
+        ExitCode::FAILURE
+    })?;
+    if users.is_empty() {
+        eprintln!("No users found.");
         return Ok(ExitCode::SUCCESS);
     }
     for user in users {

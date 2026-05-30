@@ -1,7 +1,7 @@
 //! User entity for hoofprint
 
 use crate::{error::HoofprintError, get_random_password, password::hash_password};
-use sea_orm::{ActiveValue, Condition};
+use sea_orm::{ActiveValue, Condition, QueryOrder};
 use sea_orm::{IntoActiveModel, entity::prelude::*};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -71,6 +71,16 @@ pub(crate) async fn search_users(
         .map_err(|e| HoofprintError::InternalError(e.to_string()))
 }
 
+pub(crate) async fn list_users(
+    db: &DatabaseConnection,
+) -> Result<Vec<Model>, HoofprintError> {
+    Entity::find()
+        .order_by_asc(Column::Email)
+        .all(db)
+        .await
+        .map_err(|e| HoofprintError::InternalError(e.to_string()))
+}
+
 /// Reset the admin user's password and return the new password
 pub(crate) async fn reset_admin_password(db: DatabaseConnection) -> Result<String, HoofprintError> {
     let admin_id = Uuid::nil();
@@ -122,6 +132,27 @@ mod tests {
         connect(Arc::new(RwLock::new(config)))
             .await
             .expect("Failed to connect to test database")
+    }
+
+    #[tokio::test]
+    async fn test_list_users() {
+        let db = setup_db().await;
+        Model::create_new(db.clone(), "bob@example.com", "Bob Jones", None)
+            .await
+            .expect("Failed to create user");
+        Model::create_new(db.clone(), "alice@example.com", "Alice Smith", None)
+            .await
+            .expect("Failed to create user");
+        Model::create_new(db.clone(), "charlie@example.com", "Charlie Brown", None)
+            .await
+            .expect("Failed to create user");
+
+        let users = list_users(&db).await.expect("List users failed");
+        assert_eq!(users.len(), 4);
+        assert_eq!(users[0].email, "admin");
+        assert_eq!(users[1].email, "alice@example.com");
+        assert_eq!(users[2].email, "bob@example.com");
+        assert_eq!(users[3].email, "charlie@example.com");
     }
 
     #[tokio::test]

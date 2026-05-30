@@ -48,6 +48,7 @@ async fn main() -> Result<ExitCode, ExitCode> {
             Command::SearchUser { query } => {
                 hoofprint::cli::handle_user_search(db.clone(), query).await
             }
+            Command::ListAllUsers => hoofprint::cli::handle_list_users(db.clone()).await,
         };
     }
 

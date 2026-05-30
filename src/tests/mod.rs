@@ -40,7 +40,7 @@ pub(crate) async fn setup_test_server() -> (TestServer, DatabaseConnection) {
         .await
         .expect("Failed to create test server");
 
-    let mut server = TestServer::new(app_server).expect("Failed to start test server");
+    let mut server = TestServer::new(app_server);
     server.save_cookies();
 
     (server, db)

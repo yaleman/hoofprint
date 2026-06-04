@@ -28,10 +28,10 @@ pub struct CliOpts {
     #[clap(subcommand)]
     pub command: Option<Command>,
 
-    #[clap(env = "HOOFPRINT_TLS_CERTIFICATE")]
+    #[clap(long, env = "HOOFPRINT_TLS_CERTIFICATE")]
     pub tls_certificate: Option<PathBuf>,
 
-    #[clap(env = "HOOFPRINT_TLS_KEY")]
+    #[clap(long, env = "HOOFPRINT_TLS_KEY")]
     pub tls_key: Option<PathBuf>,
 }
 

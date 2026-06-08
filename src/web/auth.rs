@@ -90,10 +90,12 @@ pub(crate) async fn post_login(
     let user = user::Entity::find()
         .filter(user::Column::Email.eq(form.email.clone()))
         .one(&app_state.db)
-        .await?;
+        .await
+        .inspect_err(|err| error!("Failed to get session!: {err}"))?;
 
     match user {
         None => {
+            info!(email=%form.email, "Login attempt with non-existent email");
             let login_page = LoginForm {
                 email: form.email,
                 password: "".to_string(),
@@ -118,8 +120,15 @@ pub(crate) async fn post_login(
                 }
                 Ok(()) => {
                     info!(email=%form.email, "User authenticated successfully");
-                    session.insert(AUTH_USER_ID, user.id.to_string()).await?;
-                    session.save().await?;
+                    session.clear().await;
+                    session
+                        .insert(AUTH_USER_ID, user.id.to_string())
+                        .await
+                        .inspect_err(|err| error!("Failed to insert user session!: {err}"))?;
+                    session
+                        .save()
+                        .await
+                        .inspect_err(|err| error!("Failed to save session!: {err}"))?;
                 }
             }
         }

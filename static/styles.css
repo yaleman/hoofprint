@@ -222,11 +222,13 @@ select {
 	display: flex;
 }
 
-.flex_right {
+.buttonbar {
+	margin: auto;
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: flex-end;
-	gap: 1rem;
+	justify-content: center;
+	min-width: 50%;
+	gap: 1.0rem;
 }
 
 .h-middle {
@@ -338,6 +340,10 @@ select {
 
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
+	.container {
+		justify-content: center;
+	}
+
 	body,
 	nav,
 	main {

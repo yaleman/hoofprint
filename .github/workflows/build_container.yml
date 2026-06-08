@@ -1,45 +1,42 @@
 ---
 name: "Build container"
 "on":
+  workflow_dispatch:
   push:
+    paths-ignore:
+      - docs/**
     branches:
       - main
-  workflow_dispatch:
+  pull_request:
 
 permissions:
-  contents: read
   packages: write
+  contents: read
   id-token: write
-
-env:
-  SCCACHE_GHA_ENABLED: "true"
-  RUSTC_WRAPPER: "sccache"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  docker:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
-      - uses: docker/github-builder/.github/workflows/build.yml@v1
-        with:
-          output: image
-          platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          distribute: true
-          setup-qemu: false
-          cache: true
-          cache-mode: max
-          cache-scope: hoogprints-container
-          context: .
-          file: ./Dockerfile
-          meta-images: ghcr.io/${{ github.repository }}
-          meta-tags: |
-            type=sha,prefix=sha-
-            type=raw,value=latest
+  build:
+    uses: docker/github-builder/.github/workflows/build.yml@v1
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    with:
+      output: image
+      push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+      platforms: linux/amd64,linux/arm64
+      meta-images: ghcr.io/${{ github.repository }}
+      meta-tags: |
+        type=ref,event=branch
+        type=ref,event=pr
+        type=sha
+        type=raw,value=latest,enable={{is_default_branch}}
+    secrets:
+      registry-auths: |
+        - registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}

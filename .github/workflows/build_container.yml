@@ -3,10 +3,6 @@ name: "Build container"
 "on":
   workflow_dispatch:
   push:
-    paths-ignore:
-      - docs/**
-    branches:
-      - main
   pull_request:
 
 permissions:

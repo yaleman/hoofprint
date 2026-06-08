@@ -36,15 +36,10 @@ jobs:
           setup-qemu: false
           cache: true
           cache-mode: max
-          cache-scope: websites-container
+          cache-scope: hoogprints-container
           context: .
           file: ./Dockerfile
           meta-images: ghcr.io/${{ github.repository }}
           meta-tags: |
             type=sha,prefix=sha-
             type=raw,value=latest
-          secrets:
-            registry-auths: |
-              - registry: ghcr.io
-                username: ${{ github.repository_owner }}
-                password: ${{ secrets.GITHUB_TOKEN }}

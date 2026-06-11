@@ -7,7 +7,7 @@ test:
 
 # Check the JavaScript and CSS files using Biome
 js-lint:
-    biome check static/*.css static/*.js
+    mise exec -- biome check static/*.css static/*.js
 
 rust-lint:
     cargo clippy --quiet --all-targets --all-features

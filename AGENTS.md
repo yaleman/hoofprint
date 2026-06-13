@@ -60,8 +60,8 @@ The database layer is built on SeaORM with SQLite:
   - Migrations run automatically on connection in a transaction
   - Current schema includes:
     - **Site** table: id (UUID), name, url, created_at
-    - **User** table: id (UUID), preferred_username, display_name, groups (JSON), claim_json (JSON)
-    - **Code** table: id (UUID), user_id (FK), code_type, code_value, site_id (FK), created_at, last_updated
+    - **User** table: id (UUID), display_name, email, groups (JSON), password
+    - **Code** table: id (UUID), user_id (FK), type, value, site_id (FK), created_at, last_updated, name (optional)
 
 ### Configuration (`src/config.rs`)
 

@@ -71,9 +71,7 @@ pub(crate) async fn search_users(
         .map_err(|e| HoofprintError::InternalError(e.to_string()))
 }
 
-pub(crate) async fn list_users(
-    db: &DatabaseConnection,
-) -> Result<Vec<Model>, HoofprintError> {
+pub(crate) async fn list_users(db: &DatabaseConnection) -> Result<Vec<Model>, HoofprintError> {
     Entity::find()
         .order_by_asc(Column::Email)
         .all(db)

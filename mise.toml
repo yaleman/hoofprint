@@ -1,2 +1,37 @@
 [tools]
 biome = "latest"
+
+
+[tasks.check]
+depends = ["clippy", "test", "biome"]
+
+[tasks.fmt]
+run = "cargo fmt"
+
+[tasks.test]
+depends = ["fmt"]
+run = "cargo test --all --all-features --quiet -- --nocapture"
+
+[tasks.clippy]
+depends = ["fmt"]
+run = "cargo clippy --all-targets --all-features -- -D warnings"
+
+[tasks.biome]
+run = "biome check static/*.css static/*.js"
+
+[tasks.docker-build]
+run = "docker build -t ghcr.io/yaleman/hoofprint:latest ."
+
+[tasks.docker-run]
+run = """docker run --rm -it -p 3000:3000 \
+        --mount "type=bind,src=$(pwd)/hoofprint.sqlite,target=/data/hoofprint.sqlite" \
+        ghcr.io/yaleman/hoofprint:latest
+        """
+
+[tasks.coverage]
+run = [
+    """cargo tarpaulin --coveralls ${COVERALLS_REPO_TOKEN} \
+        --exclude-files src/main.rs \
+        --exclude-files src/cli.rs""",
+    "echo \"Coveralls repo information is at https://coveralls.io/github/yaleman/hoofprint\"",
+]

@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	window.addEventListener("beforeunload", stopScanning);
 
 	// Check for camera support
-	if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+	if (!navigator.mediaDevices?.getUserMedia) {
 		showError(
 			"Camera access is not supported in this browser. Please use a modern browser or try manual entry.",
 		);

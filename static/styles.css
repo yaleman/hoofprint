@@ -228,7 +228,7 @@ select {
 	flex-wrap: wrap;
 	justify-content: center;
 	min-width: 50%;
-	gap: 1.0rem;
+	gap: 1rem;
 }
 
 .h-middle {

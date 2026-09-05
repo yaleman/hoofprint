@@ -1,5 +1,5 @@
-use argon2::{Argon2, PasswordHasher, PasswordVerifier, password_hash::Salt};
-use tracing::{debug, error};
+use argon2::{Argon2, PasswordHasher, PasswordVerifier, password_hash::phc::Salt};
+use tracing::error;
 
 use crate::error::HoofprintError;
 
@@ -12,10 +12,13 @@ pub(crate) fn hash_password(password: &str) -> Result<String, HoofprintError> {
         &base64::engine::general_purpose::STANDARD_NO_PAD,
         PASSWORD_SALT,
     );
-    let salt: Salt = base64_salt.as_str().try_into()?;
+    let salt: Salt = Salt::from_b64(&base64_salt).map_err(|err| {
+        error!("Failed to create salt from base64: {err}");
+        HoofprintError::InternalError(err.to_string())
+    })?;
 
     argon2
-        .hash_password(password.as_bytes(), salt)
+        .hash_password_with_salt(password.as_bytes(), &salt)
         .map(|hash| hash.to_string())
         .map_err(|err| {
             error!("Failed to hash password: {err}");
@@ -25,11 +28,14 @@ pub(crate) fn hash_password(password: &str) -> Result<String, HoofprintError> {
 
 /// Verify an input password against a stored hashed password
 pub(crate) fn verify_password(input_password: &str, db_hashed: &str) -> Result<(), HoofprintError> {
-    let parsed_hash = argon2::PasswordHash::new(db_hashed)?;
+    let parsed_hash = argon2::PasswordHash::new(db_hashed).map_err(|err| {
+        error!("Failed to parse password hash: {err}");
+        HoofprintError::Authentication
+    })?;
     Argon2::default()
         .verify_password(input_password.as_bytes(), &parsed_hash)
         .map_err(|err| {
-            debug!(error=%err, "Failed to verify password");
+            error!(error=%err, "Failed to verify password");
             HoofprintError::Authentication
         })
 }

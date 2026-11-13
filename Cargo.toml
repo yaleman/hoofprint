@@ -9,7 +9,7 @@ askama = "0.16.0"
 askama_web = { version = "0.16.0", features = ["axum-0.8"] }
 async-trait = "0.1"
 axum = { version = "0.8.9", features = ["tokio", "macros"] }
-axum-server = { version = "0.8.0", features = [
+axum-server = { version = "0.9.0", features = [
     "tokio-rustls",
     "rustls",
     "rustls-pki-types",

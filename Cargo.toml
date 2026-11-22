@@ -22,11 +22,11 @@ humantime = "2.3.0"
 log = "0.4.32"
 rand = "0.10.2"
 rustls = { version = "0.23.40", features = ["aws-lc-rs", "zlib"] }
-sea-orm = { version = "1.1.20", features = [
+sea-orm = { version = "2.0.4", features = [
     "sqlx-sqlite",
     "runtime-tokio-rustls",
 ] }
-sea-orm-migration = { version = "1.1.20", features = [
+sea-orm-migration = { version = "2.0.4", features = [
     "with-time",
     "with-uuid",
     "with-json",
@@ -45,8 +45,8 @@ tower-http = { version = "0.7.0", features = [
     "compression-gzip",
     "compression-deflate",
 ] }
-tower-sessions = { version = "0.14.0" }
-tower-sessions-sqlx-store = { version = "0.15.0", features = ["sqlite"] }
+tower-sessions = { version = "0.15.0" }
+tower-sessions-sqlx-store = { version = "0.16.0", features = ["sqlite"] }
 tracing = { version = "0.1.44", features = ["log", "release_max_level_debug"] }
 url = { version = "2.5.8", features = ["serde"] }
 uuid = { version = "1.23.2", features = ["v7"] }
